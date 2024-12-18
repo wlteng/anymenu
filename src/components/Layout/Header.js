@@ -32,7 +32,7 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
     if (shop?.useTextLogo) {
       return shop.textLogo || shop.name;
     } else if (!shop) {
-      return 'Sample Menu';
+      return null;
     }
     
     return null;
@@ -40,6 +40,7 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
 
   const renderCenterContent = () => {
     const title = getHeaderTitle();
+    const isSampleMenu = location.pathname === '/';
     
     if (title) {
       return (
@@ -49,6 +50,18 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
       );
     }
     
+    // For sample menu page, use static logo
+    if (isSampleMenu) {
+      return (
+        <img 
+          src="/img/logo/logo.png"
+          alt="Sample Menu"
+          className="h-8 w-auto cursor-pointer"
+        />
+      );
+    }
+    
+    // For actual shops with logo
     if (shop?.rectangleLogo) {
       return (
         <img 

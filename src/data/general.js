@@ -13,19 +13,7 @@ export const availableCategories = [
 ];
 
 export const currencyList = [
-  {
-    code: 'IDR',
-    name: 'Indonesian Rupiah',
-    symbol: 'Rp',
-    decimals: 0,
-    country: 'Indonesia',
-    language: 'id',
-    flag: 'indonesia.png',
-    numberFormat: {
-      thousandSeparator: '.',
-      decimalSeparator: ',',
-    }
-  },
+  
   {
     code: 'USD',
     name: 'US Dollar',
@@ -37,6 +25,20 @@ export const currencyList = [
     numberFormat: {
       thousandSeparator: ',',
       decimalSeparator: '.',
+    }
+  },
+
+  {
+    code: 'IDR',
+    name: 'Indonesian Rupiah',
+    symbol: 'Rp',
+    decimals: 0,
+    country: 'Indonesia',
+    language: 'id',
+    flag: 'indonesia.png',
+    numberFormat: {
+      thousandSeparator: '.',
+      decimalSeparator: ',',
     }
   },
   {
