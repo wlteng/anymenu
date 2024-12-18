@@ -1,19 +1,137 @@
-import React, { useState } from 'react';
-import { ChefHat, Flame, X, Heart, Share2, Clock, Tag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChefHat, Flame, X, Heart, Share2, Clock, Tag, Star } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "../components/ui/dialog";
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { LoadingSpinner } from './ui/loading';
+import { 
+  addFavoriteItem, 
+  removeFavoriteItem, 
+  checkIsFavorited 
+} from '../firebase/utils';
 
-const PopupItem = ({ item, isOpen, onClose }) => {
+const PopupItem = ({ item, isOpen, onClose, shop }) => {
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (user && item && isOpen) {
+        try {
+          const isFavorited = await checkIsFavorited(user.uid, item.id);
+          setIsLiked(isFavorited);
+        } catch (error) {
+          console.error('Error checking favorite status:', error);
+        }
+      }
+    };
+
+    checkFavorite();
+  }, [user, item, isOpen]);
+
+  // In PopupItem.js - find handleLikeToggle function
+  const handleLikeToggle = async (e) => {
+    e.preventDefault(); // Add this line
+    e.stopPropagation();
+    
+    if (!user) {
+      showToast({
+        title: 'Login Required',
+        description: 'Please login to add items to favorites',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      if (isLiked) {
+        await removeFavoriteItem(user.uid, item.id);
+        setIsLiked(false);
+        showToast({
+          title: 'Success',
+          description: 'Item removed from favorites'
+        });
+      } else {
+        // This is where we need to modify the favorite data structure
+        const favoriteData = {
+          ...item,
+          shopId: shop?.id,
+          shop: {
+            id: shop?.id,
+            name: shop?.name,
+            username: shop?.username,
+            squareLogo: shop?.squareLogo,
+            rectangleLogo: shop?.rectangleLogo
+          }
+        };
+
+        await addFavoriteItem(user.uid, favoriteData);
+        setIsLiked(true);
+        showToast({
+          title: 'Success',
+          description: 'Item added to favorites'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to update favorites',
+        type: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleShare = async (e) => {
+    e.preventDefault(); // Add this line
+  e.stopPropagation();
+    if (isSharing) return;
+
+    setIsSharing(true);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: item.title,
+          text: item.description,
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast({
+          title: 'Success',
+          description: 'Link copied to clipboard'
+        });
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        showToast({
+          title: 'Error',
+          description: 'Failed to share item',
+          type: 'error'
+        });
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   if (!item) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-0">
+      <DialogContent className="p-0" onClick={(e) => e.stopPropagation()}>
         <div className="relative">
           {/* Image Section */}
           <div className="relative h-[300px]">
@@ -32,21 +150,41 @@ const PopupItem = ({ item, isOpen, onClose }) => {
             {/* Top Actions */}
             <div className="absolute top-4 left-4 flex gap-4">
               <button 
-                onClick={() => setIsLiked(!isLiked)}
-                className="transition-transform hover:scale-110"
+                onClick={handleLikeToggle}
+                disabled={isLoading}
+                className="transition-transform hover:scale-110 disabled:opacity-50 p-2 bg-black/20 rounded-full backdrop-blur-sm"
               >
-                <Heart 
-                  className={`w-6 h-6 drop-shadow-lg ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`}
-                />
+                {isLoading ? (
+                  <LoadingSpinner className="w-6 h-6 text-white" />
+                ) : (
+                  <Heart 
+                    className={`w-6 h-6 drop-shadow-lg ${
+                      isLiked ? 'text-red-500 fill-red-500' : 'text-white'
+                    }`}
+                  />
+                )}
               </button>
-              <button className="transition-transform hover:scale-110">
-                <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
+              <button 
+                onClick={handleShare}
+                disabled={isSharing}
+                className="p-2 bg-black/20 rounded-full backdrop-blur-sm transition-transform hover:scale-110 disabled:opacity-50"
+              >
+                {isSharing ? (
+                  <LoadingSpinner className="w-6 h-6 text-white" />
+                ) : (
+                  <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
+                )}
               </button>
             </div>
             
+            {/* Close Button */}
             <button 
-              onClick={onClose}
-              className="absolute top-4 right-4 transition-transform hover:scale-110"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
+              className="absolute top-4 right-4 p-2 bg-black/20 rounded-full backdrop-blur-sm transition-transform hover:scale-110"
             >
               <X className="w-6 h-6 text-white drop-shadow-lg" />
             </button>
@@ -73,12 +211,13 @@ const PopupItem = ({ item, isOpen, onClose }) => {
 
           {/* Content Section */}
           <div className="p-6 bg-white">
-            {/* Title */}
+            {/* Title and Tags */}
             <div className="mb-4">
               <DialogTitle className="text-xl font-semibold mb-3">
                 {item.title}
               </DialogTitle>
-              {/* Signature Icons */}
+              
+              {/* Item Tags */}
               <div className="flex gap-2 mt-2.5">
                 {item.isChefRecommended && (
                   <div className="bg-yellow-500 p-1.5 rounded-full shadow-md">
@@ -90,6 +229,11 @@ const PopupItem = ({ item, isOpen, onClose }) => {
                     <Flame className="w-5 h-5 text-white" />
                   </div>
                 )}
+                {item.isPopular && (
+                  <div className="bg-purple-500 p-1.5 rounded-full shadow-md">
+                    <Star className="w-5 h-5 text-white" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -98,11 +242,13 @@ const PopupItem = ({ item, isOpen, onClose }) => {
               {item.description}
             </p>
 
-            {/* Time Info */}
-            <div className="flex items-center text-gray-500">
-              <Clock className="w-4 h-4 mr-1" />
-              <span className="text-sm">15-20 minutes</span>
-            </div>
+            {/* Preparation Time */}
+            {item.preparationTime && (
+              <div className="flex items-center text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span className="text-sm">{item.preparationTime} minutes</span>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

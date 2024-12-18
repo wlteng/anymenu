@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChefHat, Flame, Star, Tag } from 'lucide-react'; // Added Tag import
+import { ChefHat, Flame, Star, Tag } from 'lucide-react';
 import PopupItem from '../PopupItem';
 
 const Template2 = ({ menuItems = [] }) => {
@@ -12,10 +12,39 @@ const Template2 = ({ menuItems = [] }) => {
     'Main Course', 
     'Desserts', 
     'Drinks',
-    { id: 'chefs', icon: <ChefHat className="w-4 h-4 text-white" /> },
-    { id: 'spicy', icon: <Flame className="w-4 h-4 text-white" /> },
-    { id: 'popular', icon: <Star className="w-4 h-4 text-white" /> }
+    { id: 'chefs', icon: <ChefHat className="w-4 h-4" /> },
+    { id: 'spicy', icon: <Flame className="w-4 h-4" /> },
+    { id: 'popular', icon: <Star className="w-4 h-4" /> }
   ];
+
+  const getCategoryStyle = (category) => {
+    const isString = typeof category === 'string';
+    const categoryId = isString ? category : category.id;
+    const isSelected = selectedCategory === categoryId;
+
+    if (isString) {
+      return isSelected 
+        ? 'bg-gray-800 text-white'
+        : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+    }
+
+    const styles = {
+      chefs: {
+        default: 'bg-yellow-100 text-yellow-600',
+        active: 'bg-yellow-500 text-white'
+      },
+      spicy: {
+        default: 'bg-red-100 text-red-600',
+        active: 'bg-red-500 text-white'
+      },
+      popular: {
+        default: 'bg-purple-100 text-purple-600',
+        active: 'bg-purple-500 text-white'
+      }
+    };
+
+    return isSelected ? styles[categoryId].active : styles[categoryId].default;
+  };
 
   const filteredItems = menuItems.filter(item => {
     if (selectedCategory === 'All') return true;
@@ -31,32 +60,38 @@ const Template2 = ({ menuItems = [] }) => {
       <div className="sticky top-0 bg-white shadow-sm z-40">
         <div className="overflow-x-auto">
           <div className="flex space-x-4 p-4">
-            {categories.map((category) => (
-              <button
-                key={typeof category === 'string' ? category : category.id}
-                onClick={() => setSelectedCategory(typeof category === 'string' ? category : category.id)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm flex items-center gap-1 ${
-                  selectedCategory === (typeof category === 'string' ? category : category.id)
-                    ? 'bg-blue-600 text-white'
-                    : typeof category === 'object'
-                      ? category.id === 'chefs'
-                        ? 'bg-yellow-500'
-                        : category.id === 'popular'
-                          ? 'bg-purple-500'
-                          : 'bg-red-500'
-                      : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {typeof category === 'string' ? category : category.icon}
-              </button>
-            ))}
+            {categories.map((category) => {
+              const isString = typeof category === 'string';
+              const categoryId = isString ? category : category.id;
+              
+              return (
+                <button
+                  key={categoryId}
+                  onClick={() => setSelectedCategory(categoryId)}
+                  className={`
+                    px-4 py-2 
+                    rounded-full 
+                    whitespace-nowrap 
+                    text-sm 
+                    flex 
+                    items-center 
+                    gap-1
+                    transition-colors
+                    duration-200
+                    ${getCategoryStyle(category)}
+                  `}
+                >
+                  {isString ? category : category.icon}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
 
       {/* Gallery Grid */}
       <div className="p-2">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           {filteredItems.map(item => (
             <div
               key={item.id}

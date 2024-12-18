@@ -7,10 +7,20 @@ import Template3 from './templates/Template3';
 const ShopMenu = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('template1');
   
+  // Define a mock shop for the sample data
+  const sampleShop = {
+    id: 'sample-shop',
+    name: 'Sample Restaurant',
+    username: 'sample-restaurant',
+    defaultTemplate: 'template1',
+    squareLogo: '/img/sample/logo-square.jpg',
+    rectangleLogo: '/img/sample/logo-rectangle.jpg'
+  };
+  
   // Extended sample menu items with a mix of regular and promotional items
   const menuItems = [
     {
-      id: 1,
+      id: 'item-1',
       title: "Spicy Tuna Roll",
       category: "Appetizers",
       price: 12.99,
@@ -19,29 +29,32 @@ const ShopMenu = () => {
       isSpicy: true,
       isChefRecommended: true,
       image: "/img/sample/1.jpg",
-      preparationTime: "15-20"
+      preparationTime: "15-20",
+      shopId: sampleShop.id
     },
     {
-      id: 2,
+      id: 'item-2',
       title: "Grilled Salmon",
       category: "Main Course",
       price: 24.99,
       description: "Atlantic salmon with seasonal vegetables and herbs",
       isChefRecommended: true,
       image: "/img/sample/2.jpg",
-      preparationTime: "20-25"
+      preparationTime: "20-25",
+      shopId: sampleShop.id
     },
     {
-      id: 3,
+      id: 'item-3',
       title: "Classic Caesar Salad",
       category: "Appetizers",
       price: 10.99,
       description: "Crisp romaine lettuce with traditional Caesar dressing",
       image: "/img/sample/3.jpg",
-      preparationTime: "10-15"
+      preparationTime: "10-15",
+      shopId: sampleShop.id
     },
     {
-      id: 4,
+      id: 'item-4',
       title: "Beef Tenderloin",
       category: "Main Course",
       price: 34.99,
@@ -50,30 +63,33 @@ const ShopMenu = () => {
       isChefRecommended: true,
       isPopular: true,
       image: "/img/sample/4.jpg",
-      preparationTime: "25-30"
+      preparationTime: "25-30",
+      shopId: sampleShop.id
     },
     {
-      id: 5,
+      id: 'item-5',
       title: "Chocolate Lava Cake",
       category: "Desserts",
       price: 8.99,
       description: "Warm chocolate cake with molten center",
       isPopular: true,
       image: "/img/sample/5.jpg",
-      preparationTime: "15-20"
+      preparationTime: "15-20",
+      shopId: sampleShop.id
     },
     {
-      id: 6,
+      id: 'item-6',
       title: "Green Tea Ice Cream",
       category: "Desserts",
       price: 6.99,
       promotionalPrice: 4.99,
       description: "Traditional Japanese matcha ice cream",
       image: "/img/sample/6.jpg",
-      preparationTime: "5"
+      preparationTime: "5",
+      shopId: sampleShop.id
     },
     {
-      id: 7,
+      id: 'item-7',
       title: "Spicy Ramen",
       category: "Main Course",
       price: 16.99,
@@ -81,19 +97,21 @@ const ShopMenu = () => {
       isSpicy: true,
       isPopular: true,
       image: "/img/sample/7.jpg",
-      preparationTime: "15-20"
+      preparationTime: "15-20",
+      shopId: sampleShop.id
     },
     {
-      id: 8,
+      id: 'item-8',
       title: "Fresh Fruit Smoothie",
       category: "Drinks",
       price: 7.99,
       description: "Blend of seasonal fruits with yogurt",
       image: "/img/sample/8.jpg",
-      preparationTime: "5-10"
+      preparationTime: "5-10",
+      shopId: sampleShop.id
     },
     {
-      id: 9,
+      id: 'item-9',
       title: "Premium Coffee",
       category: "Drinks",
       price: 4.99,
@@ -101,28 +119,52 @@ const ShopMenu = () => {
       description: "Freshly brewed premium coffee beans",
       isPopular: true,
       image: "/img/sample/9.jpg",
-      preparationTime: "5"
+      preparationTime: "5",
+      shopId: sampleShop.id
     },
     {
-      id: 10,
+      id: 'item-10',
       title: "Vegetable Tempura",
       category: "Appetizers",
       price: 11.99,
       description: "Assorted vegetables in light crispy batter",
       image: "/img/sample/10.jpg",
-      preparationTime: "15-20"
+      preparationTime: "15-20",
+      shopId: sampleShop.id
     }
   ];
+
+  // Ensure each menu item has the shop data embedded
+  const menuItemsWithShop = menuItems.map(item => ({
+    ...item,
+    shop: sampleShop
+  }));
+
+  const renderTemplate = () => {
+    const props = {
+      menuItems: menuItemsWithShop,
+      shop: sampleShop,
+      isPreview: false
+    };
+
+    switch (selectedTemplate) {
+      case 'template2':
+        return <Template2 {...props} />;
+      case 'template3':
+        return <Template3 {...props} />;
+      default:
+        return <Template1 {...props} />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
         onTemplateChange={setSelectedTemplate} 
-        currentTemplate={selectedTemplate} 
+        currentTemplate={selectedTemplate}
+        shop={sampleShop} 
       />
-      {selectedTemplate === 'template1' && <Template1 menuItems={menuItems} />}
-      {selectedTemplate === 'template2' && <Template2 menuItems={menuItems} />}
-      {selectedTemplate === 'template3' && <Template3 menuItems={menuItems} />}
+      {renderTemplate()}
     </div>
   );
 };

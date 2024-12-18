@@ -1,15 +1,125 @@
-// components/Layout/Header.js
-import React from 'react';
-import { Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { Layout } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import Menu from './Menu';
 
-const Header = ({ onTemplateChange, currentTemplate }) => {
+const Header = ({ onTemplateChange, currentTemplate, shop }) => {
+  const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+  const location = useLocation();
+
+  const templates = [
+    { id: 'template1', label: '1 Column' },
+    { id: 'template2', label: '2 Columns' },
+    { id: 'template3', label: '3 Columns' }
+  ];
+
+  const shouldShowLayoutIcon = () => {
+    const path = location.pathname;
+    return path === '/' || /^\/[^/]+$/.test(path);
+  };
+
+  const getHeaderTitle = () => {
+    const path = location.pathname;
+    
+    if (path === '/my-shops') {
+      return 'My Shops';
+    }
+
+    if (path.startsWith('/menu/')) {
+      return 'Create Menu';
+    }
+    
+    if (shop?.useTextLogo) {
+      return shop.textLogo || shop.name;
+    } else if (!shop) {
+      return 'Sample Menu';
+    }
+    
+    return null;
+  };
+
+  const renderCenterContent = () => {
+    const title = getHeaderTitle();
+    
+    if (title) {
+      return (
+        <span className="text-xl font-bold">
+          {title}
+        </span>
+      );
+    }
+    
+    if (shop?.rectangleLogo) {
+      return (
+        <img 
+          src={shop.rectangleLogo} 
+          alt={shop.name}
+          className="h-8 w-auto cursor-pointer"
+        />
+      );
+    }
+
+    return (
+      <span className="text-xl font-bold">
+        Sample Menu
+      </span>
+    );
+  };
+
   return (
     <header className="bg-white shadow-sm">
-      <div className="flex justify-between items-center px-4 py-2">
-        <Menu onTemplateChange={onTemplateChange} currentTemplate={currentTemplate} />
-        <span className="text-xl font-bold text-blue-600">SuperMenu</span>
-        <Bell className="w-6 h-6 cursor-pointer" />
+      <div className="flex items-center px-4 py-2">
+        <div className="flex items-center flex-1">
+          <Menu 
+            onTemplateChange={onTemplateChange} 
+            currentTemplate={currentTemplate} 
+            shop={shop} 
+          />
+        </div>
+
+        <div className="flex items-center justify-center flex-1">
+          {renderCenterContent()}
+        </div>
+
+        <div className="flex-1 flex justify-end">
+          {shouldShowLayoutIcon() && onTemplateChange ? (
+            <div className="relative">
+              <button 
+                className="p-2 hover:bg-gray-100 rounded-full"
+                onClick={() => setShowLayoutMenu(!showLayoutMenu)}
+              >
+                <Layout className="w-6 h-6" />
+              </button>
+
+              {showLayoutMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowLayoutMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50 py-1">
+                    {templates.map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => {
+                          onTemplateChange(template.id);
+                          setShowLayoutMenu(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                          currentTemplate === template.id ? 'text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        {template.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="w-10" />
+          )}
+        </div>
       </div>
     </header>
   );
