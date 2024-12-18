@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Hash } from 'lucide-react';
 import { LoadingSpinner } from '../../components/ui/loading';
 import { availableCategories, currencyList } from '../../data/general';
 import LogoUpload from './LogoUpload';
@@ -21,8 +20,23 @@ const Form = ({
   isLoading,
   onCancel
 }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Create a clean version of the formData removing any unnecessary fields
+    const updatedData = {
+      ...formData,
+      showItemCodes: formData.showItemCodes ?? false,
+      textLogo: formData.textLogo || '',
+      useTextLogo: formData.useTextLogo || false,
+      defaultTemplate: formData.defaultTemplate || 'template1',
+      categories: formData.categories || [],
+    };
+
+    handleSave(e, updatedData);
+  };
+
   return (
-    <form onSubmit={handleSave} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {/* App Logo (Square) */}
       <LogoUpload
         label="App Logo"
@@ -150,16 +164,16 @@ const Form = ({
               <label
                 key={category.value}
                 className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                  formData.categories.includes(category.value) ? 'border-blue-500 bg-blue-50' : ''
+                  formData.categories?.includes(category.value) ? 'border-blue-500 bg-blue-50' : ''
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={formData.categories.includes(category.value)}
+                  checked={formData.categories?.includes(category.value)}
                   onChange={() => {
-                    const newCategories = formData.categories.includes(category.value)
+                    const newCategories = formData.categories?.includes(category.value)
                       ? formData.categories.filter(c => c !== category.value)
-                      : [...formData.categories, category.value];
+                      : [...(formData.categories || []), category.value];
                     setFormData(prev => ({ ...prev, categories: newCategories }));
                   }}
                   className="mr-2"
@@ -171,8 +185,33 @@ const Form = ({
         </div>
       </div>
 
-      {/* Default Menu Template */}
+      {/* Menu Settings */}
       <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Menu Settings</h3>
+        
+        {/* Item Code Toggle */}
+        <div className="mb-6">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.showItemCodes ?? false}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                showItemCodes: e.target.checked 
+              }))}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-700">Show item codes in menu</span>
+            </div>
+          </label>
+          <p className="mt-1 ml-7 text-sm text-gray-500">
+            Enable this to display item codes next to menu items, making it easier for customers to place orders verbally
+          </p>
+        </div>
+
+        {/* Default Menu Template */}
         <label className="block text-sm font-medium text-gray-700 mb-4">
           Default Menu Template
         </label>

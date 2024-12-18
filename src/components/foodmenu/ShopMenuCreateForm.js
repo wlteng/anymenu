@@ -22,6 +22,7 @@ const ShopMenuCreateForm = () => {
     promotionalPrice: '',
     description: '',
     preparationTime: '',
+    itemCode: '',
     isSpicy: false,
     isChefRecommended: false,
     isPopular: false,
@@ -72,7 +73,8 @@ const ShopMenuCreateForm = () => {
           ...itemData,
           imagePreview: itemData.image,
           promotionalPrice: itemData.promotionalPrice || '',
-          preparationTime: itemData.preparationTime || ''
+          preparationTime: itemData.preparationTime || '',
+          itemCode: itemData.itemCode || ''
         });
         setIsEditMode(true);
       }
@@ -154,11 +156,11 @@ const ShopMenuCreateForm = () => {
 
   return (
     <>
-      <Header />
+      <Header shop={shop} pageTitle={`${isEditMode ? 'Edit' : 'Add'} ${category} Item`} />
       <div className="max-w-2xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">
-            {isEditMode ? 'Edit' : 'Add'} Menu Item
+            {isEditMode ? 'Edit' : 'Add'} {category} Item
           </h1>
         </div>
 
@@ -213,6 +215,21 @@ const ShopMenuCreateForm = () => {
               required
             />
           </div>
+
+          {/* Item Code */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Item Code (Optional)
+            </label>
+            <input
+              type="text"
+              value={formData.itemCode}
+              onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
+              className="w-full p-2 border rounded-lg"
+              placeholder="e.g., A1, B2, etc."
+            />
+          </div>
+
           {/* Pricing */}
           <div className="grid grid-cols-2 gap-4">
             <div>

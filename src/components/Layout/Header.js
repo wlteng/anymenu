@@ -3,7 +3,7 @@ import { Layout } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import Menu from './Menu';
 
-const Header = ({ onTemplateChange, currentTemplate, shop }) => {
+const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const location = useLocation();
 
@@ -19,6 +19,10 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
   };
 
   const getHeaderTitle = () => {
+    if (pageTitle) {
+      return pageTitle;
+    }
+
     const path = location.pathname;
     
     if (path === '/my-shops') {
@@ -31,8 +35,6 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
     
     if (shop?.useTextLogo) {
       return shop.textLogo || shop.name;
-    } else if (!shop) {
-      return null;
     }
     
     return null;
@@ -81,8 +83,8 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
 
   return (
     <header className="bg-white shadow-sm">
-      <div className="flex items-center px-4 py-2">
-        <div className="flex items-center flex-1">
+      <div className="flex items-center px-3 md:px-4 lg:px-4 py-2">
+        <div className="flex items-center w-1/4">
           <Menu 
             onTemplateChange={onTemplateChange} 
             currentTemplate={currentTemplate} 
@@ -90,11 +92,11 @@ const Header = ({ onTemplateChange, currentTemplate, shop }) => {
           />
         </div>
 
-        <div className="flex items-center justify-center flex-1">
+        <div className="flex items-center justify-center w-2/4">
           {renderCenterContent()}
         </div>
 
-        <div className="flex-1 flex justify-end">
+        <div className="w-1/4 flex justify-end">
           {shouldShowLayoutIcon() && onTemplateChange ? (
             <div className="relative">
               <button 

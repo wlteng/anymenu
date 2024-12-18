@@ -99,7 +99,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
                     onClick={() => onCreateMenu(shop.username)}
                     className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100"
                   >
-                    Create Menu
+                     Menu
                   </button>
                 </div>
               </div>

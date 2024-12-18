@@ -16,6 +16,8 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     { id: 'spicy', icon: <Flame className="w-4 h-4" /> }
   ];
 
+  const showItemCodes = shop?.showItemCodes ?? false;
+
   const getCategoryStyle = (category) => {
     const isString = typeof category === 'string';
     const categoryId = isString ? category : category.id;
@@ -47,6 +49,16 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     if (selectedCategory === 'spicy') return item.isSpicy;
     return item.category === selectedCategory;
   });
+
+  const renderItemCode = (itemCode) => {
+    if (!showItemCodes || !itemCode) return null;
+
+    return (
+      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-medium text-gray-700 shadow-sm">
+        {itemCode}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -107,6 +119,9 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                     </div>
                   )}
                   
+                  {/* Item Code */}
+                  {renderItemCode(item.itemCode)}
+                  
                   {/* Mobile: Badges at top left */}
                   <div className="absolute top-2 left-2 flex gap-1 md:hidden">
                     {item.isSpicy && (
@@ -141,57 +156,56 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                 </div>
 
                 {/* Content Section - Desktop Layout */}
-                {/* Content Section - Desktop Layout */}
-<div className="flex-1 p-6 relative">
-  <div className="flex flex-col h-full">
-    <div>
-      <h3 className="text-xl font-semibold">{item.title}</h3>
-      <p className="mt-2 text-gray-500 line-clamp-2">{item.description}</p>
-      
-      {/* Mobile: Preparation Time */}
-      <div className="md:hidden mt-2 text-gray-500">
-        <Clock className="w-4 h-4 inline mr-1" />
-        <span className="text-sm">{item.preparationTime} mins</span>
-      </div>
-    </div>
+                <div className="flex-1 p-6 relative">
+                  <div className="flex flex-col h-full">
+                    <div>
+                      <h3 className="text-xl font-semibold">{item.title}</h3>
+                      <p className="mt-2 text-gray-500 line-clamp-2">{item.description}</p>
+                      
+                      {/* Mobile: Preparation Time */}
+                      <div className="md:hidden mt-2 text-gray-500">
+                        <Clock className="w-4 h-4 inline mr-1" />
+                        <span className="text-sm">{item.preparationTime} mins</span>
+                      </div>
+                    </div>
 
-    {/* Desktop: Badges and Minutes */}
-    <div className="hidden md:flex items-center gap-2 mt-auto">
-      {item.isSpicy && (
-        <div className="bg-red-500 p-1.5 rounded-full shadow-md">
-          <Flame className="w-4 h-4 text-white" />
-        </div>
-      )}
-      {item.isChefRecommended && (
-        <div className="bg-yellow-500 p-1.5 rounded-full shadow-md">
-          <ChefHat className="w-4 h-4 text-white" />
-        </div>
-      )}
-      <div className="flex items-center text-gray-500">
-        <Clock className="w-4 h-4 mr-1" />
-        <span className="text-sm">{item.preparationTime} mins</span>
-      </div>
-    </div>
+                    {/* Desktop: Badges and Minutes */}
+                    <div className="hidden md:flex items-center gap-2 mt-auto">
+                      {item.isSpicy && (
+                        <div className="bg-red-500 p-1.5 rounded-full shadow-md">
+                          <Flame className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                      {item.isChefRecommended && (
+                        <div className="bg-yellow-500 p-1.5 rounded-full shadow-md">
+                          <ChefHat className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                      <div className="flex items-center text-gray-500">
+                        <Clock className="w-4 h-4 mr-1" />
+                        <span className="text-sm">{item.preparationTime} mins</span>
+                      </div>
+                    </div>
 
-    {/* Desktop: Floating Price */}
-    <div className="hidden md:flex items-center text-xl gap-1 absolute right-0 translate-y-1/2" style={{bottom:'22px'}}>
-      {item.promotionalPrice ? (
-        <>
-          <div className="text-gray-300 line-through ">
-            ${item.price}
-          </div>
-          <div className="bg-green-500  text-white px-4 py-2 rounded-tl-lg rounded-br-lg ml-2">
-            ${item.promotionalPrice}
-          </div>
-        </>
-      ) : (
-        <div className="bg-blue-50 text-gray-400  px-4 py-2 rounded-tl-lg rounded-br-lg">
-          ${item.price}
-        </div>
-      )}
-    </div>
-  </div>
-</div>
+                    {/* Desktop: Floating Price */}
+                    <div className="hidden md:flex items-center text-xl gap-1 absolute right-0 translate-y-1/2" style={{bottom:'22px'}}>
+                      {item.promotionalPrice ? (
+                        <>
+                          <div className="text-gray-300 line-through">
+                            ${item.price}
+                          </div>
+                          <div className="bg-green-500 text-white px-4 py-2 rounded-tl-lg rounded-br-lg ml-2">
+                            ${item.promotionalPrice}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="bg-blue-50 text-gray-400 px-4 py-2 rounded-tl-lg rounded-br-lg">
+                          ${item.price}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -200,12 +214,12 @@ const Template1 = ({ menuItems = [], shop = null }) => {
 
       <PopupItem 
         item={{
-                  ...selectedItem,
-                  shopId: shop?.id  // Add shopId here
-                }}
+          ...selectedItem,
+          shopId: shop?.id
+        }}
         isOpen={!!selectedItem}
         onClose={() => setSelectedItem(null)}
-        shop={shop} 
+        shop={shop}
       />
     </div>
   );

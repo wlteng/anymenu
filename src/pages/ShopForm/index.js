@@ -12,6 +12,7 @@ const ShopForm = () => {
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
+    id: '', // Add id to initial state
     name: '',
     username: '',
     textLogo: '',
@@ -24,7 +25,11 @@ const ShopForm = () => {
     currencyCode: 'IDR',
     language: 'id',
     country: 'Indonesia',
-    categories: []
+    categories: [],
+    showItemCodes: false,
+    // Preserve existing logo URLs
+    squareLogo: null,
+    rectangleLogo: null
   });
 
   const [usernameStatus, setUsernameStatus] = useState({
@@ -34,13 +39,17 @@ const ShopForm = () => {
   });
 
   useEffect(() => {
-    loadShop();
+    if (username) {
+      loadShop();
+    }
   }, [username]);
 
   const loadShop = async () => {
     setIsLoading(true);
     try {
       const shopData = await getShopByUsername(username);
+      console.log('Loaded shop data:', shopData); // Debug log
+
       if (!shopData) {
         showToast({
           title: 'Error',
@@ -50,24 +59,41 @@ const ShopForm = () => {
         navigate('/my-shops');
         return;
       }
+
+      // Update form data with loaded shop data
       setFormData({
+        ...formData,
         ...shopData,
+        id: shopData.id, // Ensure ID is set
         textLogo: shopData.textLogo || '',
-        useTextLogo: shopData.useTextLogo || false,
+        useTextLogo: Boolean(shopData.useTextLogo),
         squareLogoPreview: shopData.squareLogo || null,
         rectangleLogoPreview: shopData.rectangleLogo || null,
+        // Preserve original logo URLs
+        squareLogo: shopData.squareLogo || null,
+        rectangleLogo: shopData.rectangleLogo || null,
+        categories: shopData.categories || [],
+        showItemCodes: Boolean(shopData.showItemCodes),
         defaultTemplate: shopData.defaultTemplate || 'template1',
         currencyCode: shopData.currencyCode || 'IDR',
         language: shopData.language || 'id',
-        country: shopData.country || 'Indonesia',
-        categories: shopData.categories || []
+        country: shopData.country || 'Indonesia'
+      });
+
+      // Set username status to available for existing username
+      setUsernameStatus({
+        isChecking: false,
+        isAvailable: true,
+        message: ''
       });
     } catch (error) {
+      console.error('Error loading shop:', error);
       showToast({
         title: 'Error',
-        description: 'Failed to load shop',
+        description: 'Failed to load shop data',
         type: 'error'
       });
+      navigate('/my-shops');
     } finally {
       setIsLoading(false);
     }
@@ -140,38 +166,60 @@ const ShopForm = () => {
     setIsLoading(true);
 
     try {
-      const updateData = {
+      if (!formData.id) {
+        throw new Error('Shop ID is missing');
+      }
+
+      // Create clean data object removing undefined/null values
+      const cleanData = {
         name: formData.name,
         username: formData.username,
         textLogo: formData.textLogo || '',
-        useTextLogo: formData.useTextLogo || false,
+        useTextLogo: Boolean(formData.useTextLogo),
         defaultTemplate: formData.defaultTemplate || 'template1',
         currencyCode: formData.currencyCode || 'IDR',
         language: formData.language || 'id',
         country: formData.country || 'Indonesia',
-        categories: formData.categories
+        categories: formData.categories || [],
+        showItemCodes: Boolean(formData.showItemCodes)
       };
 
+      // Only include existing logo URLs if they exist
+      if (formData.squareLogo) {
+        cleanData.squareLogo = formData.squareLogo;
+      }
+      if (formData.rectangleLogo) {
+        cleanData.rectangleLogo = formData.rectangleLogo;
+      }
+
+      // Handle new logo uploads
       if (formData.squareLogoFile) {
-        updateData.squareLogoFile = formData.squareLogoFile;
-        updateData.previousSquareLogo = formData.squareLogo;
+        cleanData.squareLogoFile = formData.squareLogoFile;
+        if (formData.squareLogo) {
+          cleanData.previousSquareLogo = formData.squareLogo;
+        }
       }
 
       if (formData.rectangleLogoFile) {
-        updateData.rectangleLogoFile = formData.rectangleLogoFile;
-        updateData.previousRectangleLogo = formData.rectangleLogo;
+        cleanData.rectangleLogoFile = formData.rectangleLogoFile;
+        if (formData.rectangleLogo) {
+          cleanData.previousRectangleLogo = formData.rectangleLogo;
+        }
       }
 
-      await updateShop(formData.id, updateData);
+      console.log('Saving shop with data:', cleanData); // Debug log
+      await updateShop(formData.id, cleanData);
+      
       showToast({
         title: 'Success',
         description: 'Shop updated successfully'
       });
       navigate('/my-shops');
     } catch (error) {
+      console.error('Error updating shop:', error);
       showToast({
         title: 'Error',
-        description: 'Failed to update shop',
+        description: 'Failed to update shop: ' + error.message,
         type: 'error'
       });
     } finally {
@@ -184,7 +232,7 @@ const ShopForm = () => {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4">
-        <div className="flex items-center h-16">
+          <div className="flex items-center h-16">
             <button
               onClick={() => navigate('/my-shops')}
               className="p-2 hover:bg-gray-100 rounded-full mr-4"

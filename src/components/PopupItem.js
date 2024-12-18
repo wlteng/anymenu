@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, Flame, X, Heart, Share2, Clock, Tag, Star } from 'lucide-react';
+import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,9 +21,11 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
 
+  const showItemCodes = shop?.showItemCodes ?? false;
+
   useEffect(() => {
     const checkFavorite = async () => {
-      if (user && item && isOpen) {
+      if (user && item?.id && isOpen) {
         try {
           const isFavorited = await checkIsFavorited(user.uid, item.id);
           setIsLiked(isFavorited);
@@ -34,11 +36,10 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
     };
 
     checkFavorite();
-  }, [user, item, isOpen]);
+  }, [user, item?.id, isOpen]);
 
-  // In PopupItem.js - find handleLikeToggle function
   const handleLikeToggle = async (e) => {
-    e.preventDefault(); // Add this line
+    e.preventDefault();
     e.stopPropagation();
     
     if (!user) {
@@ -62,20 +63,39 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
           description: 'Item removed from favorites'
         });
       } else {
-        // This is where we need to modify the favorite data structure
-        const favoriteData = {
-          ...item,
-          shopId: shop?.id,
-          shop: {
-            id: shop?.id,
-            name: shop?.name,
-            username: shop?.username,
-            squareLogo: shop?.squareLogo,
-            rectangleLogo: shop?.rectangleLogo
-          }
+        // Create a clean version of the item without undefined values
+        const cleanItem = {
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          price: item.price,
+          promotionalPrice: item.promotionalPrice || null,
+          itemCode: item.itemCode || '',
+          image: item.image || '',
+          category: item.category || '',
+          preparationTime: item.preparationTime || '',
+          isSpicy: item.isSpicy || false,
+          isChefRecommended: item.isChefRecommended || false,
+          isPopular: item.isPopular || false,
+          shopId: shop.id
         };
 
-        await addFavoriteItem(user.uid, favoriteData);
+        // Create a clean shop object
+        const cleanShop = {
+          id: shop.id,
+          name: shop.name || '',
+          username: shop.username || '',
+          squareLogo: shop.squareLogo || '',
+          rectangleLogo: shop.rectangleLogo || ''
+        };
+
+        // Add to favorites with clean data
+        await addFavoriteItem(user.uid, {
+          ...cleanItem,
+          shopId: shop.id,
+          shop: cleanShop
+        });
+
         setIsLiked(true);
         showToast({
           title: 'Success',
@@ -95,8 +115,8 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
   };
 
   const handleShare = async (e) => {
-    e.preventDefault(); // Add this line
-  e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     if (isSharing) return;
 
     setIsSharing(true);
@@ -147,23 +167,33 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
               </div>
             )}
             
+            {/* Show Item Code if enabled */}
+            {showItemCodes && item.itemCode && (
+              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-medium text-gray-700 shadow-sm">
+                {item.itemCode}
+              </div>
+            )}
+            
             {/* Top Actions */}
             <div className="absolute top-4 left-4 flex gap-4">
-              <button 
-                onClick={handleLikeToggle}
-                disabled={isLoading}
-                className="transition-transform hover:scale-110 disabled:opacity-50 p-2 bg-black/20 rounded-full backdrop-blur-sm"
-              >
-                {isLoading ? (
-                  <LoadingSpinner className="w-6 h-6 text-white" />
-                ) : (
-                  <Heart 
-                    className={`w-6 h-6 drop-shadow-lg ${
-                      isLiked ? 'text-red-500 fill-red-500' : 'text-white'
-                    }`}
-                  />
-                )}
-              </button>
+              {/* Only show heart icon if user is logged in */}
+              {user && (
+                <button 
+                  onClick={handleLikeToggle}
+                  disabled={isLoading}
+                  className="transition-transform hover:scale-110 disabled:opacity-50 p-2 bg-black/20 rounded-full backdrop-blur-sm"
+                >
+                  {isLoading ? (
+                    <LoadingSpinner className="w-6 h-6 text-white" />
+                  ) : (
+                    <Heart 
+                      className={`w-6 h-6 drop-shadow-lg ${
+                        isLiked ? 'text-red-500 fill-red-500' : 'text-white'
+                      }`}
+                    />
+                  )}
+                </button>
+              )}
               <button 
                 onClick={handleShare}
                 disabled={isSharing}
@@ -176,18 +206,6 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
                 )}
               </button>
             </div>
-            
-            {/* Close Button */}
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClose();
-              }}
-              className="absolute top-4 right-4 p-2 bg-black/20 rounded-full backdrop-blur-sm transition-transform hover:scale-110"
-            >
-              <X className="w-6 h-6 text-white drop-shadow-lg" />
-            </button>
 
             {/* Price Tag */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
@@ -211,11 +229,12 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
 
           {/* Content Section */}
           <div className="p-6 bg-white">
-            {/* Title and Tags */}
             <div className="mb-4">
-              <DialogTitle className="text-xl font-semibold mb-3">
-                {item.title}
-              </DialogTitle>
+              <div className="flex items-center justify-between gap-2">
+                <DialogTitle className="text-xl font-semibold">
+                  {item.title}
+                </DialogTitle>
+              </div>
               
               {/* Item Tags */}
               <div className="flex gap-2 mt-2.5">

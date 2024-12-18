@@ -31,10 +31,10 @@ export const ToastContextProvider = ({ children }) => {
       <ToastProvider>
         {children}
         {toasts.map(toast => (
-          <Toast key={toast.id}>
+          <Toast key={toast.id} className="duration-300">
             <ToastContainer variant={toast.type === 'error' ? 'destructive' : undefined}>
-              {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
-              {toast.description && <ToastDescription>{toast.description}</ToastDescription>}
+              {toast.title && <ToastTitle className="text-lg font-medium">{toast.title}</ToastTitle>}
+              {toast.description && <ToastDescription className="text-sm opacity-90">{toast.description}</ToastDescription>}
               <ToastCloseButton />
             </ToastContainer>
           </Toast>

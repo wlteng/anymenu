@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChefHat, Flame, Star, Tag } from 'lucide-react';
 import PopupItem from '../PopupItem';
 
-const Template2 = ({ menuItems = [] }) => {
+const Template2 = ({ menuItems = [], shop = null }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -16,6 +16,8 @@ const Template2 = ({ menuItems = [] }) => {
     { id: 'spicy', icon: <Flame className="w-4 h-4" /> },
     { id: 'popular', icon: <Star className="w-4 h-4" /> }
   ];
+
+  const showItemCodes = shop?.showItemCodes ?? false;
 
   const getCategoryStyle = (category) => {
     const isString = typeof category === 'string';
@@ -53,6 +55,16 @@ const Template2 = ({ menuItems = [] }) => {
     if (selectedCategory === 'popular') return item.isPopular;
     return item.category === selectedCategory;
   });
+
+  const renderItemCode = (itemCode) => {
+    if (!showItemCodes || !itemCode) return null;
+
+    return (
+      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-medium text-gray-700 shadow-sm">
+        {itemCode}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -111,6 +123,9 @@ const Template2 = ({ menuItems = [] }) => {
                   </div>
                 )}
                 
+                {/* Item Code */}
+                {renderItemCode(item.itemCode)}
+
                 {/* Price Tag */}
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
                   {item.promotionalPrice ? (
@@ -153,6 +168,7 @@ const Template2 = ({ menuItems = [] }) => {
         item={selectedItem}
         isOpen={!!selectedItem}
         onClose={() => setSelectedItem(null)}
+        shop={shop}
       />
     </div>
   );
