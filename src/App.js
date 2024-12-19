@@ -9,6 +9,7 @@ import ShopMenuCreator from './components/foodmenu/ShopMenuCreator';
 import ShopMenuCreateForm from './components/foodmenu/ShopMenuCreateForm';
 import LoveFoodPage from './pages/LoveFoodPage';
 import ShopForm from './pages/ShopForm';
+import Profile from './pages/Profile';
 
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -21,26 +22,33 @@ function App() {
     <AuthProvider>
       <ToastContextProvider>
         <Router>
-
           <Routes>
-            <Route 
-              path="/my-shops/:username/edit" 
-              element={
-                <PrivateRoute>
-                  <ShopForm />
-                </PrivateRoute>
-              } 
-            />
             {/* Public routes */}
             <Route path="/" element={<ShopMenu />} />
             <Route path="/:username" element={<MenuPreview />} />
 
             {/* Private routes */}
             <Route 
+              path="/profile" 
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
               path="/my-shops" 
               element={
                 <PrivateRoute>
                   <ShopManager />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/my-shops/:username/edit" 
+              element={
+                <PrivateRoute>
+                  <ShopForm />
                 </PrivateRoute>
               } 
             />
@@ -61,18 +69,18 @@ function App() {
               } 
             />
             <Route 
-              path="/dashboard" 
-              element={
-                <PrivateRoute>
-                  <ShopMenu />
-                </PrivateRoute>
-              } 
-            />
-            <Route 
               path="/menu/:username/:category/:itemId" 
               element={
                 <PrivateRoute>
                   <ShopMenuCreateForm />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <PrivateRoute>
+                  <ShopMenu />
                 </PrivateRoute>
               } 
             />
@@ -84,6 +92,9 @@ function App() {
                 </PrivateRoute>
               } 
             />
+            
+            {/* Catch all route - redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </ToastContextProvider>
