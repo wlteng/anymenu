@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
-import { ChefHat, Flame, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChefHat, Flame, Clock, Store } from 'lucide-react';
 import PopupItem from '../PopupItem';
+import { getStores } from '../../firebase/utils';
 
 const Template1 = ({ menuItems = [], shop = null }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedStore, setSelectedStore] = useState('All');
+  const [stores, setStores] = useState([]);
 
+  // Load stores if shop type is Food Court
+  useEffect(() => {
+    const loadStores = async () => {
+      if (shop?.shopType === 'Food Court') {
+        try {
+          const storesData = await getStores(shop.id);
+          setStores(storesData);
+        } catch (error) {
+          console.error('Error loading stores:', error);
+        }
+      }
+    };
+    loadStores();
+  }, [shop]);
+
+  // Create categories array based on shop settings
   const categories = [
-    'All', 
-    'Appetizers', 
-    'Main Course', 
-    'Desserts', 
-    'Drinks',
+    'All',
+    ...(shop?.categories || []),
     { id: 'chefs', icon: <ChefHat className="w-4 h-4" /> },
     { id: 'spicy', icon: <Flame className="w-4 h-4" /> }
   ];
@@ -43,11 +59,19 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     return isSelected ? styles[categoryId].active : styles[categoryId].default;
   };
 
+  // Filter items based on both category and store
   const filteredItems = menuItems.filter(item => {
-    if (selectedCategory === 'All') return true;
-    if (selectedCategory === 'chefs') return item.isChefRecommended;
-    if (selectedCategory === 'spicy') return item.isSpicy;
-    return item.category === selectedCategory;
+    const matchesCategory = 
+      selectedCategory === 'All' ||
+      selectedCategory === 'chefs' && item.isChefRecommended ||
+      selectedCategory === 'spicy' && item.isSpicy ||
+      item.category === selectedCategory;
+
+    const matchesStore = 
+      selectedStore === 'All' ||
+      item.storeId === selectedStore;
+
+    return matchesCategory && matchesStore;
   });
 
   const renderItemCode = (itemCode) => {
@@ -62,10 +86,67 @@ const Template1 = ({ menuItems = [], shop = null }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Categories */}
+      {/* Categories and Store Filter */}
       <div className="sticky top-0 bg-white shadow-sm z-40">
+        {/* Store Filter for Food Court */}
+        {shop?.shopType === 'Food Court' && stores.length > 0 && (
+          <div className="">
+            <div className="overflow-x-auto">
+              <div className="flex space-x-4 px-4">
+                <button
+                  key="all-stores"
+                  onClick={() => setSelectedStore('All')}
+                  className={`
+                    px-4 py-2 
+                    rounded-full 
+                    whitespace-nowrap 
+                    text-sm 
+                    flex 
+                    items-center 
+                    gap-1
+                    transition-colors
+                    duration-200
+                    ${selectedStore === 'All' 
+                      ? 'bg-gray-800 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }
+                  `}
+                >
+                  <Store className="w-4 h-4" />
+                  All Stores
+                </button>
+                {stores.map((store) => (
+                  <button
+                    key={store.id}
+                    onClick={() => setSelectedStore(store.id)}
+                    className={`
+                      px-4 py-2 
+                      rounded-full 
+                      whitespace-nowrap 
+                      text-sm 
+                      flex 
+                      items-center 
+                      gap-1
+                      transition-colors
+                      duration-200
+                      ${selectedStore === store.id 
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }
+                    `}
+                  >
+                    <Store className="w-4 h-4" />
+                    {store.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Categories */}
         <div className="overflow-x-auto">
-          <div className="flex space-x-4 p-4">
+          <div className="flex space-x-4 px-4 pb-4">
             {categories.map((category) => {
               const isString = typeof category === 'string';
               const categoryId = isString ? category : category.id;
@@ -168,6 +249,14 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                         <span className="text-sm">{item.preparationTime} mins</span>
                       </div>
                     </div>
+
+                    {/* Desktop: Store Name for Food Court */}
+                    {shop?.shopType === 'Food Court' && item.storeName && (
+                      <div className="hidden md:flex items-center gap-2 mt-2 text-gray-500">
+                        <Store className="w-4 h-4" />
+                        <span className="text-sm">{item.storeName}</span>
+                      </div>
+                    )}
 
                     {/* Desktop: Badges and Minutes */}
                     <div className="hidden md:flex items-center gap-2 mt-auto">
