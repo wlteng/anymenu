@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingSpinner } from '../ui/loading';
 import Header from '../Layout/Header';
-import { getMenuItems, getShopByUsername, deleteMenuItem, updateMenuItem } from '../../firebase/utils';
+import { getMenuItems, getShopByUsername, deleteMenuItem, updateMenuItem, getStores } from '../../firebase/utils';
 import { Plus, Trash2, Edit, ChefHat, Flame, Star } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 
 const ShopMenuCreator = () => {
   const { username } = useParams();
+  const [searchParams] = useSearchParams();
+  const storeId = searchParams.get('store');
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [shop, setShop] = useState(null);
+  const [currentStore, setCurrentStore] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [editingItemCode, setEditingItemCode] = useState(null);
 
   useEffect(() => {
     loadShopAndMenuItems();
-  }, [username]);
+  }, [username, storeId]);
 
   const loadShopAndMenuItems = async () => {
     setIsLoading(true);
@@ -37,7 +40,30 @@ const ShopMenuCreator = () => {
       }
       setShop(shopData);
 
-      const items = await getMenuItems(shopData.id);
+      // If it's a food court, verify store exists
+      if (shopData.shopType === 'Food Court') {
+        if (!storeId) {
+          navigate(`/menu/${username}/store-select`);
+          return;
+        }
+
+        // Load stores and find current store
+        const stores = await getStores(shopData.id);
+        const store = stores.find(s => s.id === storeId);
+        if (!store) {
+          showToast({
+            title: 'Error',
+            description: 'Store not found',
+            type: 'error'
+          });
+          navigate(`/menu/${username}/store-select`);
+          return;
+        }
+        setCurrentStore(store);
+      }
+
+      // Load menu items for the shop or specific store
+      const items = await getMenuItems(storeId || shopData.id);
       setMenuItems(items);
     } catch (error) {
       showToast({
@@ -97,6 +123,18 @@ const ShopMenuCreator = () => {
     }
   };
 
+  const handleAddItem = () => {
+    const baseUrl = `/menu/${username}`;
+    const url = storeId ? `${baseUrl}/${selectedCategory}/add?store=${storeId}` : `${baseUrl}/${selectedCategory}/add`;
+    navigate(url);
+  };
+
+  const handleEditItem = (itemId) => {
+    const baseUrl = `/menu/${username}/${selectedCategory}`;
+    const url = storeId ? `${baseUrl}/${itemId}?store=${storeId}` : `${baseUrl}/${itemId}`;
+    navigate(url);
+  };
+
   const renderItemTags = (item) => (
     <div className="flex gap-1">
       {item.isChefRecommended && (
@@ -149,6 +187,19 @@ const ShopMenuCreator = () => {
     );
   };
 
+  const getPageTitle = () => {
+    if (selectedCategory) {
+      if (currentStore) {
+        return `Create Menu - ${currentStore.name} - ${selectedCategory}`;
+      }
+      return `Create Menu - ${selectedCategory}`;
+    }
+    if (currentStore) {
+      return `Create Menu - ${currentStore.name}`;
+    }
+    return "Create Menu";
+  };
+
   if (isLoading && !menuItems.length) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -165,7 +216,7 @@ const ShopMenuCreator = () => {
     <>
       <Header 
         shop={shop} 
-        pageTitle={selectedCategory ? `Create Menu - ${selectedCategory}` : "Create Menu"}
+        pageTitle={getPageTitle()}
       />
       <div className="max-w-4xl mx-auto p-6">
         {!selectedCategory ? (
@@ -205,7 +256,7 @@ const ShopMenuCreator = () => {
                 </button>
               </div>
               <button
-                onClick={() => navigate(`/menu/${username}/${selectedCategory}/add`)}
+                onClick={handleAddItem}
                 className="p-2 bg-blue-600 text-white rounded-lg flex items-center justify-center"
               >
                 <Plus className="w-5 h-5" />
@@ -249,7 +300,7 @@ const ShopMenuCreator = () => {
 
                       <div className="flex gap-2">
                         <button
-                          onClick={() => navigate(`/menu/${username}/${selectedCategory}/${item.id}`)}
+                          onClick={() => handleEditItem(item.id)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
                         >
                           <Edit className="w-5 h-5" />

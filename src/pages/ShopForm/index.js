@@ -12,9 +12,10 @@ const ShopForm = () => {
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    id: '', // Add id to initial state
+    id: '',
     name: '',
     username: '',
+    shopType: 'Restaurant', // Add default shop type
     textLogo: '',
     useTextLogo: false,
     squareLogoFile: null,
@@ -27,7 +28,6 @@ const ShopForm = () => {
     country: 'Indonesia',
     categories: [],
     showItemCodes: false,
-    // Preserve existing logo URLs
     squareLogo: null,
     rectangleLogo: null
   });
@@ -48,7 +48,7 @@ const ShopForm = () => {
     setIsLoading(true);
     try {
       const shopData = await getShopByUsername(username);
-      console.log('Loaded shop data:', shopData); // Debug log
+      console.log('Loaded shop data:', shopData);
 
       if (!shopData) {
         showToast({
@@ -60,16 +60,15 @@ const ShopForm = () => {
         return;
       }
 
-      // Update form data with loaded shop data
       setFormData({
         ...formData,
         ...shopData,
-        id: shopData.id, // Ensure ID is set
+        id: shopData.id,
+        shopType: shopData.shopType || 'Restaurant', // Load shop type with default
         textLogo: shopData.textLogo || '',
         useTextLogo: Boolean(shopData.useTextLogo),
         squareLogoPreview: shopData.squareLogo || null,
         rectangleLogoPreview: shopData.rectangleLogo || null,
-        // Preserve original logo URLs
         squareLogo: shopData.squareLogo || null,
         rectangleLogo: shopData.rectangleLogo || null,
         categories: shopData.categories || [],
@@ -80,7 +79,6 @@ const ShopForm = () => {
         country: shopData.country || 'Indonesia'
       });
 
-      // Set username status to available for existing username
       setUsernameStatus({
         isChecking: false,
         isAvailable: true,
@@ -170,10 +168,10 @@ const ShopForm = () => {
         throw new Error('Shop ID is missing');
       }
 
-      // Create clean data object removing undefined/null values
       const cleanData = {
         name: formData.name,
         username: formData.username,
+        shopType: formData.shopType || 'Restaurant', // Include shop type in save data
         textLogo: formData.textLogo || '',
         useTextLogo: Boolean(formData.useTextLogo),
         defaultTemplate: formData.defaultTemplate || 'template1',
@@ -184,7 +182,6 @@ const ShopForm = () => {
         showItemCodes: Boolean(formData.showItemCodes)
       };
 
-      // Only include existing logo URLs if they exist
       if (formData.squareLogo) {
         cleanData.squareLogo = formData.squareLogo;
       }
@@ -192,7 +189,6 @@ const ShopForm = () => {
         cleanData.rectangleLogo = formData.rectangleLogo;
       }
 
-      // Handle new logo uploads
       if (formData.squareLogoFile) {
         cleanData.squareLogoFile = formData.squareLogoFile;
         if (formData.squareLogo) {
@@ -207,7 +203,7 @@ const ShopForm = () => {
         }
       }
 
-      console.log('Saving shop with data:', cleanData); // Debug log
+      console.log('Saving shop with data:', cleanData);
       await updateShop(formData.id, cleanData);
       
       showToast({

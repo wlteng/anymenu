@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Eye, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Eye, Edit2, Trash2, MoreVertical, PlusCircle } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 import { LoadingSpinner } from '../ui/loading';
 import { deleteDoc, query, collection, where, getDocs } from 'firebase/firestore';
@@ -9,6 +9,29 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleCreateMenu = () => {
+    // If shop type is Food Court, navigate to store selection
+    if (shop.shopType === 'Food Court') {
+      window.location.href = `/menu/${shop.username}/store-select`;
+    } else {
+      // Otherwise, proceed directly to menu creation
+      onCreateMenu(shop.username);
+    }
+  };
 
   const handleDelete = async () => {
     if (deleteText !== shop.name) return;
@@ -57,7 +80,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             {shop.squareLogo ? (
@@ -79,31 +102,72 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
                 <div className="flex items-center gap-2 mt-2">
                   <button 
                     onClick={() => window.open(`/${shop.username}`, '_blank')}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+                    className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100"
                   >
-                    <Eye className="w-5 h-5" />
+                    <div className="flex items-center gap-1">
+                      <Eye size={16} />
+                      View
+                    </div>
                   </button>
                   <button
-                    onClick={() => onEdit(shop)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-full"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => onCreateMenu(shop.username)}
+                    onClick={handleCreateMenu}
                     className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100"
                   >
-                     Menu
+                    Create Menu
                   </button>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="rounded-full"
+            >
+              <MoreVertical size={20} className="text-gray-600" />
+            </button>
+
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10">
+                <button
+                  onClick={() => {
+                    onEdit(shop);
+                    setShowDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                >
+                  <Edit2 size={16} className="mr-2" />
+                  Edit
+                </button>
+
+                {shop.shopType === 'Food Court' && (
+                  <button
+                    onClick={() => {
+                      window.location.href = `/my-shops/${shop.username}/stores`;
+                      setShowDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                  >
+                    <PlusCircle size={16} className="mr-2" />
+                    Create Stores
+                  </button>
+                )}
+
+                <div className="h-px bg-gray-200 my-1" />
+
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(true);
+                    setShowDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

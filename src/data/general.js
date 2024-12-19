@@ -1,4 +1,12 @@
-// In general.js, add this export
+// Shop Types
+export const shopTypes = [
+  { value: "Restaurant", label: "Restaurant" },
+  { value: "Food Court", label: "Food Court" },
+  { value: "Massage Services", label: "Massage Services" },
+  { value: "Beauty Services", label: "Beauty Services" },
+  { value: "Hair Salon", label: "Hair Salon" }
+];
+
 export const availableCategories = [
   { value: "Appetizers", label: "Appetizers" },
   { value: "Main Course", label: "Main Course" },
@@ -13,7 +21,6 @@ export const availableCategories = [
 ];
 
 export const currencyList = [
-  
   {
     code: 'USD',
     name: 'US Dollar',
@@ -27,7 +34,6 @@ export const currencyList = [
       decimalSeparator: '.',
     }
   },
-
   {
     code: 'IDR',
     name: 'Indonesian Rupiah',

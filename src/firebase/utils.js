@@ -132,8 +132,6 @@ export const getShopById = async (shopId) => {
 };
 
 // Update shop
-// Update shop
-// Update shop
 export const updateShop = async (shopId, shopData) => {
   try {
     const shopRef = doc(db, 'shops', shopId);
@@ -187,7 +185,7 @@ export const updateShop = async (shopId, shopData) => {
   }
 };
 
-// Also update the deleteShop function to handle both logos
+// Delete shop
 export const deleteShop = async (shopId, squareLogoUrl, rectangleLogoUrl) => {
   try {
     // Delete square logo if exists
@@ -225,7 +223,6 @@ export const deleteShop = async (shopId, squareLogoUrl, rectangleLogoUrl) => {
 };
 
 // Menu Items Functions
-// In utils.js
 export const addMenuItem = async (shopId, itemData, imageFile) => {
   try {
     let imageUrl = null;
@@ -332,6 +329,117 @@ export const getShopByUsername = async (username) => {
     return null;
   } catch (error) {
     console.error('Error getting shop by username:', error);
+    throw error;
+  }
+};
+
+// Store Functions
+export const createStore = async (shopId, storeData) => {
+  try {
+    let storeImageUrl = null;
+    
+    // Upload store image if exists
+    if (storeData.storeImageFile) {
+      // Generate unique filename using timestamp and original extension
+      const timestamp = Date.now();
+      const originalName = storeData.storeImageFile.name;
+      const extension = originalName.split('.').pop();
+      const uniqueFileName = `store_${timestamp}.${extension}`;
+      
+      const storeImageRef = ref(storage, `stores/${shopId}/${uniqueFileName}`);
+      await uploadBytes(storeImageRef, storeData.storeImageFile);
+      storeImageUrl = await getDownloadURL(storeImageRef);
+    }
+
+    // Clean the data before saving - remove all undefined values
+    const { storeImageFile, storeImagePreview, previousStoreImage, ...cleanData } = storeData;
+
+    const storeDoc = {
+      ...cleanData,
+      shopId,
+      storeImage: storeImageUrl || null,
+      createdAt: new Date()
+    };
+
+    const docRef = await addDoc(collection(db, 'stores'), storeDoc);
+    return { id: docRef.id, ...storeDoc };
+  } catch (error) {
+    console.error('Error creating store:', error);
+    throw error;
+  }
+};
+
+// Get stores by shop ID
+export const getStores = async (shopId) => {
+  try {
+    const q = query(collection(db, 'stores'), where('shopId', '==', shopId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting stores:', error);
+    throw error;
+  }
+};
+
+// Update store
+export const updateStore = async (storeId, storeData) => {
+  try {
+    const storeRef = doc(db, 'stores', storeId);
+    let updatedData = { ...storeData };
+
+    // Handle store image upload if provided
+    if (storeData.storeImageFile) {
+      const storageRef = ref(storage, `stores/${storeData.shopId}/${storeData.storeImageFile.name}`);
+      await uploadBytes(storageRef, storeData.storeImageFile);
+      updatedData.storeImage = await getDownloadURL(storageRef);
+
+      // Delete old store image if exists
+      if (storeData.previousStoreImage) {
+        const oldImageRef = ref(storage, storeData.previousStoreImage);
+        try {
+          await deleteObject(oldImageRef);
+        } catch (error) {
+          console.warn('Old store image not found:', error);
+        }
+      }
+    }
+
+    // Clean the data before saving
+    const {
+      storeImageFile,
+      previousStoreImage,
+      storeImagePreview,
+      ...cleanData
+    } = updatedData;
+
+    await updateDoc(storeRef, cleanData);
+    return { id: storeId, ...cleanData };
+  } catch (error) {
+    console.error('Error updating store:', error);
+    throw error;
+  }
+};
+
+// Delete store
+export const deleteStore = async (storeId, storeImage) => {
+  try {
+    // Delete store image if exists
+    if (storeImage) {
+      const storeImageRef = ref(storage, storeImage);
+      try {
+        await deleteObject(storeImageRef);
+      } catch (error) {
+        console.warn('Store image not found:', error);
+      }
+    }
+
+    // Delete store document
+    await deleteDoc(doc(db, 'stores', storeId));
+  } catch (error) {
+    console.error('Error deleting store:', error);
     throw error;
   }
 };

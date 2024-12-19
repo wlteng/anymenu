@@ -1,7 +1,7 @@
 import React from 'react';
-import { Check, X, Hash } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { LoadingSpinner } from '../../components/ui/loading';
-import { availableCategories, currencyList } from '../../data/general';
+import { availableCategories, currencyList, shopTypes } from '../../data/general';
 import LogoUpload from './LogoUpload';
 
 const templates = [
@@ -22,7 +22,6 @@ const Form = ({
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Create a clean version of the formData removing any unnecessary fields
     const updatedData = {
       ...formData,
       showItemCodes: formData.showItemCodes ?? false,
@@ -30,6 +29,7 @@ const Form = ({
       useTextLogo: formData.useTextLogo || false,
       defaultTemplate: formData.defaultTemplate || 'template1',
       categories: formData.categories || [],
+      shopType: formData.shopType || 'Restaurant',
     };
 
     handleSave(e, updatedData);
@@ -69,6 +69,32 @@ const Form = ({
 
       {/* Basic Information */}
       <div>
+        {/* Shop Type */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Shop Type
+          </label>
+          <div className="relative">
+            <select
+              value={formData.shopType || 'Restaurant'}
+              onChange={(e) => setFormData(prev => ({ ...prev, shopType: e.target.value }))}
+              className="w-full h-12 px-4 pr-10 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none"
+              required
+            >
+              {shopTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
         {/* Shop Name */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -90,14 +116,14 @@ const Form = ({
           </label>
           <div className="relative">
             <div className="flex h-12">
-              <span className="inline-flex items-center px-4 rounded-l-lg border border-gray-300 bg-gray-50 text-gray-500">
+              <span className="inline-flex items-center px-4 rounded-l-lg border border-gray-300 bg-gray-50 text-gray-500 text-sm whitespace-nowrap">
                 domain.com/
               </span>
               <input
                 type="text"
                 value={formData.username}
                 onChange={handleUsernameChange}
-                className={`flex-1 px-4 rounded-r-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
+                className={`flex-1 min-w-0 px-4 rounded-r-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
                   usernameStatus.message 
                     ? usernameStatus.isAvailable 
                       ? 'border-green-500' 
@@ -133,25 +159,32 @@ const Form = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Currency & Country
           </label>
-          <select
-            value={formData.currencyCode}
-            onChange={(e) => {
-              const selectedCurrency = currencyList.find(c => c.code === e.target.value);
-              setFormData(prev => ({
-                ...prev,
-                currencyCode: selectedCurrency.code,
-                language: selectedCurrency.language,
-                country: selectedCurrency.country
-              }));
-            }}
-            className="w-full h-12 px-4 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            {currencyList.map((currency) => (
-              <option key={currency.code} value={currency.code}>
-                {currency.country} ({currency.symbol} {currency.code})
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={formData.currencyCode}
+              onChange={(e) => {
+                const selectedCurrency = currencyList.find(c => c.code === e.target.value);
+                setFormData(prev => ({
+                  ...prev,
+                  currencyCode: selectedCurrency.code,
+                  language: selectedCurrency.language,
+                  country: selectedCurrency.country
+                }));
+              }}
+              className="w-full h-12 px-4 pr-10 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none"
+            >
+              {currencyList.map((currency) => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.country} ({currency.symbol} {currency.code})
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* Categories */}
@@ -161,25 +194,23 @@ const Form = ({
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {availableCategories.map(category => (
-              <label
+              <button
+                type="button"
                 key={category.value}
-                className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                  formData.categories?.includes(category.value) ? 'border-blue-500 bg-blue-50' : ''
+                onClick={() => {
+                  const newCategories = formData.categories?.includes(category.value)
+                    ? formData.categories.filter(c => c !== category.value)
+                    : [...(formData.categories || []), category.value];
+                  setFormData(prev => ({ ...prev, categories: newCategories }));
+                }}
+                className={`p-3 border rounded-lg text-left transition-colors hover:bg-gray-50 ${
+                  formData.categories?.includes(category.value) 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={formData.categories?.includes(category.value)}
-                  onChange={() => {
-                    const newCategories = formData.categories?.includes(category.value)
-                      ? formData.categories.filter(c => c !== category.value)
-                      : [...(formData.categories || []), category.value];
-                    setFormData(prev => ({ ...prev, categories: newCategories }));
-                  }}
-                  className="mr-2"
-                />
                 {category.label}
-              </label>
+              </button>
             ))}
           </div>
         </div>
@@ -191,7 +222,7 @@ const Form = ({
         
         {/* Item Code Toggle */}
         <div className="mb-6">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
               checked={formData.showItemCodes ?? false}
@@ -201,21 +232,15 @@ const Form = ({
               }))}
               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-700">Show item codes in menu</span>
-            </div>
+            <span className="ml-2 text-sm text-gray-700">Show item codes in menu</span>
           </label>
-          <p className="mt-1 ml-7 text-sm text-gray-500">
-            Enable this to display item codes next to menu items, making it easier for customers to place orders verbally
-          </p>
         </div>
 
         {/* Default Menu Template */}
         <label className="block text-sm font-medium text-gray-700 mb-4">
           Default Menu Template
         </label>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {templates.map((template) => (
             <label
               key={template.id}

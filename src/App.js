@@ -7,6 +7,8 @@ import MenuPreview from './components/foodmenu/MenuPreview';
 import ShopManager from './components/foodmenu/ShopManager';
 import ShopMenuCreator from './components/foodmenu/ShopMenuCreator';
 import ShopMenuCreateForm from './components/foodmenu/ShopMenuCreateForm';
+import CreateStores from './components/foodmenu/CreateStores';
+import StoreSelector from './components/foodmenu/StoreSelector';
 import LoveFoodPage from './pages/LoveFoodPage';
 import ShopForm from './pages/ShopForm';
 import Profile from './pages/Profile';
@@ -49,6 +51,22 @@ function App() {
               element={
                 <PrivateRoute>
                   <ShopForm />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/my-shops/:username/stores" 
+              element={
+                <PrivateRoute>
+                  <CreateStores />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/menu/:username/store-select" 
+              element={
+                <PrivateRoute>
+                  <StoreSelector />
                 </PrivateRoute>
               } 
             />
