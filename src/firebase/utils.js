@@ -443,3 +443,16 @@ export const deleteStore = async (storeId, storeImage) => {
     throw error;
   }
 };
+
+// In utils.js, add this function
+export const updateShopHeaderStyle = async (shopId, isDarkHeader) => {
+  try {
+    const shopRef = doc(db, 'shops', shopId);
+    await updateDoc(shopRef, {
+      isDarkHeader: isDarkHeader
+    });
+  } catch (error) {
+    console.error('Error updating shop header style:', error);
+    throw error;
+  }
+};

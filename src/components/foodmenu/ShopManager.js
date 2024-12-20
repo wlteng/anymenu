@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { getUserShops,deleteShop } from '../../firebase/utils';
+import { getUserShops, deleteShop } from '../../firebase/utils';
 import { LoadingSpinner } from '../ui/loading';
 import Header from '../Layout/Header';
 import ShopCard from './ShopCard';
@@ -69,6 +69,11 @@ const ShopManager = () => {
     }
   };
 
+  const handleHeaderStyleChange = () => {
+    // Reload shops to get updated header style
+    loadShops();
+  };
+
   return (
     <>
       <Header />
@@ -110,6 +115,7 @@ const ShopManager = () => {
                 onEdit={handleEditShop}
                 onCreateMenu={handleCreateMenu}
                 onDelete={handleDeleteShop}
+                onHeaderStyleChange={handleHeaderStyleChange}
               />
             ))}
           </div>

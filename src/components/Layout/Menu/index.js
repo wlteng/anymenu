@@ -14,7 +14,7 @@ import RecentShops from './RecentShops';
 import LoveFood from './LoveFood';
 
 
-const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null }) => {
+const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null, isDarkHeader = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -174,7 +174,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null 
       <>
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors`}
           aria-label="Menu"
         >
           <MenuIcon className="w-6 h-6" />
@@ -241,7 +241,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null 
       {/* Menu Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors`}
         aria-label="Menu"
       >
         <MenuIcon className="w-6 h-6" />
@@ -343,7 +343,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null 
       />
 
       {/* Global styles for blur effect */}
-      <style jsx global>{`
+      <style>{`
         body.menu-open .main-content {
           filter: blur(4px);
           pointer-events: none;

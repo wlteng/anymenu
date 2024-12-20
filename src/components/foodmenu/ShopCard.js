@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Eye, Edit2, Trash2, MoreVertical, PlusCircle } from 'lucide-react';
+import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 import { LoadingSpinner } from '../ui/loading';
-import { deleteDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { deleteDoc, query, collection, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useToast } from '../../contexts/ToastContext';
 
-const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
+const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleChange }) => {
+  const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -23,34 +25,20 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCreateMenu = () => {
-    // If shop type is Food Court, navigate to store selection
-    if (shop.shopType === 'Food Court') {
-      window.location.href = `/menu/${shop.username}/store-select`;
-    } else {
-      // Otherwise, proceed directly to menu creation
-      onCreateMenu(shop.username);
-    }
-  };
-
   const handleDelete = async () => {
     if (deleteText !== shop.name) return;
     
     setIsLoading(true);
     try {
-      // 1. Get all menu items for this shop
       const menuItemsQuery = query(collection(db, 'menuItems'), where('shopId', '==', shop.id));
       const menuItemsSnapshot = await getDocs(menuItemsQuery);
       
-      // Only proceed with favorites deletion if there are menu items
       if (!menuItemsSnapshot.empty) {
         const menuItemIds = menuItemsSnapshot.docs.map(doc => doc.id);
         
-        // 2. Get and delete favorites referencing these menu items
         const favoritesQuery = query(collection(db, 'favorites'), where('itemId', 'in', menuItemIds));
         const favoritesSnapshot = await getDocs(favoritesQuery);
 
-        // Delete all favorites if any exist
         if (!favoritesSnapshot.empty) {
           const favoriteDeletions = favoritesSnapshot.docs.map(doc => 
             deleteDoc(doc.ref)
@@ -58,14 +46,12 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
           await Promise.all(favoriteDeletions);
         }
 
-        // 3. Delete all menu items
         const menuItemDeletions = menuItemsSnapshot.docs.map(doc =>
           deleteDoc(doc.ref)
         );
         await Promise.all(menuItemDeletions);
       }
 
-      // 4. Delete shop
       await onDelete(shop);
       
       setShowDeleteConfirm(false);
@@ -75,6 +61,30 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
       throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleHeaderStyleToggle = async () => {
+    try {
+      setIsLoading(true);
+      const shopRef = doc(db, 'shops', shop.id);
+      await updateDoc(shopRef, {
+        isDarkHeader: !shop.isDarkHeader
+      });
+      showToast({
+        title: 'Success',
+        description: 'Header style updated successfully'
+      });
+      onHeaderStyleChange();
+    } catch (error) {
+      showToast({
+        title: 'Error',
+        description: 'Failed to update header style',
+        type: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+      setShowDropdown(false);
     }
   };
 
@@ -101,7 +111,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
                 
                 <div className="flex items-center gap-2 mt-2">
                   <button 
-                    onClick={() => window.open(`/${shop.username}`, '_blank')}
+                    onClick={() => window.open(`/${shop.username}?darkHeader=${shop.isDarkHeader || false}`, '_blank')}
                     className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100"
                   >
                     <div className="flex items-center gap-1">
@@ -110,7 +120,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
                     </div>
                   </button>
                   <button
-                    onClick={handleCreateMenu}
+                    onClick={() => onCreateMenu(shop.username)}
                     className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100"
                   >
                     Create Menu
@@ -153,6 +163,23 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete }) => {
                     Create Stores
                   </button>
                 )}
+
+                <button
+                  onClick={handleHeaderStyleToggle}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                >
+                  {shop.isDarkHeader ? (
+                    <>
+                      <Sun size={16} className="mr-2" />
+                      Light Header
+                    </>
+                  ) : (
+                    <>
+                      <Moon size={16} className="mr-2" />
+                      Dark Header
+                    </>
+                  )}
+                </button>
 
                 <div className="h-px bg-gray-200 my-1" />
 

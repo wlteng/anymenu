@@ -3,7 +3,7 @@ import { Layout } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import Menu from './Menu';
 
-const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
+const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle, isDarkHeader }) => {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const location = useLocation();
 
@@ -46,13 +46,12 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
     
     if (title) {
       return (
-        <span className="text-xl font-bold">
+        <span className={`text-xl font-bold ${isDarkHeader ? 'text-white' : 'text-gray-900'}`}>
           {title}
         </span>
       );
     }
     
-    // For sample menu page, use static logo
     if (isSampleMenu) {
       return (
         <img 
@@ -63,7 +62,6 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
       );
     }
     
-    // For actual shops with logo
     if (shop?.rectangleLogo) {
       return (
         <img 
@@ -75,20 +73,21 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
     }
 
     return (
-      <span className="text-xl font-bold">
+      <span className={`text-xl font-bold ${isDarkHeader ? 'text-white' : 'text-gray-900'}`}>
         Sample Menu
       </span>
     );
   };
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className={`${isDarkHeader ? 'bg-gray-900' : 'bg-white'} shadow-sm transition-colors duration-200`}>
       <div className="flex items-center px-3 md:px-4 lg:px-4 py-2">
         <div className="flex items-center w-1/4">
           <Menu 
             onTemplateChange={onTemplateChange} 
             currentTemplate={currentTemplate} 
-            shop={shop} 
+            shop={shop}
+            isDarkHeader={isDarkHeader}
           />
         </div>
 
@@ -97,10 +96,10 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
         </div>
 
         <div className="w-1/4 flex justify-end">
-          {shouldShowLayoutIcon() && onTemplateChange ? (
+          {shouldShowLayoutIcon() && onTemplateChange && (
             <div className="relative">
               <button 
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors`}
                 onClick={() => setShowLayoutMenu(!showLayoutMenu)}
               >
                 <Layout className="w-6 h-6" />
@@ -131,8 +130,6 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle }) => {
                 </>
               )}
             </div>
-          ) : (
-            <div className="w-10" />
           )}
         </div>
       </div>

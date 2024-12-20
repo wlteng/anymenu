@@ -84,15 +84,14 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Categories and Store Filter */}
+  const renderNavigation = () => {
+    return (
       <div className="sticky top-0 bg-white shadow-sm z-40">
-        {/* Store Filter for Food Court */}
-        {shop?.shopType === 'Food Court' && stores.length > 0 && (
-          <div className="">
+        <div className="flex flex-col">
+          {/* Store Filter for Food Court */}
+          {shop?.shopType === 'Food Court' && stores.length > 0 && (
             <div className="overflow-x-auto">
-              <div className="flex space-x-4 px-4">
+              <div className="flex space-x-4 px-4 py-4">
                 <button
                   key="all-stores"
                   onClick={() => setSelectedStore('All')}
@@ -141,40 +140,46 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                 ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Categories */}
-        <div className="overflow-x-auto">
-          <div className="flex space-x-4 px-4 pb-4">
-            {categories.map((category) => {
-              const isString = typeof category === 'string';
-              const categoryId = isString ? category : category.id;
-              
-              return (
-                <button
-                  key={categoryId}
-                  onClick={() => setSelectedCategory(categoryId)}
-                  className={`
-                    px-4 py-2 
-                    rounded-full 
-                    whitespace-nowrap 
-                    text-sm 
-                    flex 
-                    items-center 
-                    gap-1
-                    transition-colors
-                    duration-200
-                    ${getCategoryStyle(category)}
-                  `}
-                >
-                  {isString ? category : category.icon}
-                </button>
-              );
-            })}
+          {/* Categories */}
+          <div className="overflow-x-auto">
+            <div className="flex space-x-4 px-4 pb-4">
+              {categories.map((category) => {
+                const isString = typeof category === 'string';
+                const categoryId = isString ? category : category.id;
+                
+                return (
+                  <button
+                    key={categoryId}
+                    onClick={() => setSelectedCategory(categoryId)}
+                    className={`
+                      px-4 py-2 
+                      rounded-full 
+                      whitespace-nowrap 
+                      text-sm 
+                      flex 
+                      items-center 
+                      gap-1
+                      transition-colors
+                      duration-200
+                      ${getCategoryStyle(category)}
+                    `}
+                  >
+                    {isString ? category : category.icon}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {renderNavigation()}
 
       {/* Menu Items */}
       <div className="max-w-3xl mx-auto p-4">

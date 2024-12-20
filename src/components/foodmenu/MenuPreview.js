@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { LoadingSpinner } from '../ui/loading';
@@ -8,15 +8,18 @@ import Template2 from '../templates/Template2';
 import Template3 from '../templates/Template3';
 import Header from '../Layout/Header';
 
-
 const MenuPreview = () => {
   const { username } = useParams();
-  const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [shop, setShop] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [error, setError] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('template1');
+  
+  // Get isDarkHeader from URL parameters
+  const searchParams = new URLSearchParams(location.search);
+  const isDarkHeader = searchParams.get('darkHeader') === 'true';
 
   useEffect(() => {
     const loadShopAndMenu = async () => {
@@ -34,7 +37,7 @@ const MenuPreview = () => {
         const shopDoc = shopSnapshot.docs[0];
         const shopData = { id: shopDoc.id, ...shopDoc.data() };
         setShop(shopData);
-        // Set the default template from shop settings
+        
         if (shopData.defaultTemplate) {
           setSelectedTemplate(shopData.defaultTemplate);
         }
@@ -58,8 +61,6 @@ const MenuPreview = () => {
 
     loadShopAndMenu();
   }, [username]);
-
-  
 
   if (loading) {
     return (
@@ -100,14 +101,16 @@ const MenuPreview = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        shop={shop}
-        onTemplateChange={setSelectedTemplate}
-        currentTemplate={selectedTemplate}
-      />
-      {renderTemplate()}
-    </div>
+    
+        <div className="min-h-screen bg-gray-50">
+          <Header 
+            shop={shop}
+            onTemplateChange={setSelectedTemplate}
+            currentTemplate={selectedTemplate}
+            isDarkHeader={shop?.isDarkHeader || false}
+          />
+          {renderTemplate()}
+        </div>
   );
 };
 
