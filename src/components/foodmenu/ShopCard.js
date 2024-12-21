@@ -12,6 +12,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
   const [deleteText, setDeleteText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [storeCount, setStoreCount] = useState(0);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -24,6 +25,23 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Load store count for food court type shops
+  useEffect(() => {
+    const loadStoreCount = async () => {
+      if (shop.shopType === 'Food Court') {
+        try {
+          const storesQuery = query(collection(db, 'stores'), where('shopId', '==', shop.id));
+          const storesSnapshot = await getDocs(storesQuery);
+          setStoreCount(storesSnapshot.size);
+        } catch (error) {
+          console.error('Error loading store count:', error);
+        }
+      }
+    };
+
+    loadStoreCount();
+  }, [shop]);
 
   const handleDelete = async () => {
     if (deleteText !== shop.name) return;
@@ -105,9 +123,14 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
               </div>
             )}
             <div>
-              <h2 className="text-xl font-semibold">{shop.name}</h2>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                {shop.name}
+                {shop.shopType === 'Food Court' && (
+                  <span className="text-sm text-gray-500">({storeCount})</span>
+                )}
+              </h2>
               <div className="text-sm text-gray-500 mt-1">
-                <span>domain.com/{shop.username}</span>
+                <span>Type: {shop.shopType}</span>
                 
                 <div className="flex items-center gap-2 mt-2">
                   <button 
@@ -160,7 +183,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
                     className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                   >
                     <PlusCircle size={16} className="mr-2" />
-                    Create Stores
+                    Manage Stores
                   </button>
                 )}
 

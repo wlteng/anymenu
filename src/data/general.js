@@ -1,3 +1,34 @@
+// Food Specialties with icons
+export const foodSpecialties = [
+  {
+    id: 'chefRecommended',  // Changed from 'chefs' to match isChefRecommended
+    label: "Chef's Choice",
+    icon: 'ChefHat',
+    bgColor: 'bg-yellow-500',
+    textColor: 'text-yellow-600',
+    lightBg: 'bg-yellow-100',
+    property: 'isChefRecommended'  // Added property name mapping
+  },
+  {
+    id: 'spicy',
+    label: "Spicy",
+    icon: 'Flame',
+    bgColor: 'bg-red-500',
+    textColor: 'text-red-600',
+    lightBg: 'bg-red-100',
+    property: 'isSpicy'
+  },
+
+  {
+    id: 'popular',
+    label: "Popular",
+    icon: 'Star',
+    bgColor: 'bg-purple-500',
+    textColor: 'text-purple-600',
+    lightBg: 'bg-purple-100',
+    property: 'isPopular'
+  }
+];
 // Shop Types
 export const shopTypes = [
   { value: "Restaurant", label: "Restaurant" },

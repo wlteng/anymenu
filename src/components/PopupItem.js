@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star } from 'lucide-react';
+import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star, Store } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   checkIsFavorited 
 } from '../firebase/utils';
 
-const PopupItem = ({ item, isOpen, onClose, shop }) => {
+const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
@@ -37,6 +37,12 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
 
     checkFavorite();
   }, [user, item?.id, isOpen]);
+
+  const getStoreName = () => {
+    if (!stores.length || !item?.storeId) return null;
+    const store = stores.find(s => s.id === item.storeId);
+    return store?.name;
+  };
 
   const handleLikeToggle = async (e) => {
     e.preventDefault();
@@ -77,7 +83,8 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
           isSpicy: item.isSpicy || false,
           isChefRecommended: item.isChefRecommended || false,
           isPopular: item.isPopular || false,
-          shopId: shop.id
+          shopId: shop.id,
+          storeId: item.storeId || null
         };
 
         // Create a clean shop object
@@ -86,8 +93,22 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
           name: shop.name || '',
           username: shop.username || '',
           squareLogo: shop.squareLogo || '',
-          rectangleLogo: shop.rectangleLogo || ''
+          rectangleLogo: shop.rectangleLogo || '',
+          shopType: shop.shopType || ''
         };
+
+        // Add store information if it's a food court item
+        if (shop.shopType === 'Food Court' && item.storeId) {
+          const store = stores.find(s => s.id === item.storeId);
+          if (store) {
+            cleanItem.storeName = store.name;
+            cleanItem.store = {
+              id: store.id,
+              name: store.name,
+              storeImage: store.storeImage || null
+            };
+          }
+        }
 
         // Add to favorites with clean data
         await addFavoriteItem(user.uid, {
@@ -148,6 +169,31 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
   };
 
   if (!item) return null;
+
+  const storeName = getStoreName();
+  const hasPreparationTime = item.preparationTime && item.preparationTime.trim() !== '';
+
+  const renderFooterInfo = () => {
+    const hasFooterContent = hasPreparationTime || storeName;
+    if (!hasFooterContent) return null;
+
+    return (
+      <div className="flex items-center gap-4 text-gray-500">
+        {hasPreparationTime && (
+          <div className="flex items-center">
+            <Clock className="w-4 h-4 mr-1" />
+            <span className="text-sm">{item.preparationTime} minutes</span>
+          </div>
+        )}
+        {storeName && (
+          <div className="flex items-center">
+            <Store className="w-4 h-4 mr-1" />
+            <span className="text-sm">{storeName}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -230,11 +276,9 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
           {/* Content Section */}
           <div className="p-6 bg-white">
             <div className="mb-4">
-              <div className="flex items-center justify-between gap-2">
-                <DialogTitle className="text-xl font-semibold">
-                  {item.title}
-                </DialogTitle>
-              </div>
+              <DialogTitle className="text-xl font-semibold">
+                {item.title}
+              </DialogTitle>
               
               {/* Item Tags */}
               <div className="flex gap-2 mt-2.5">
@@ -261,13 +305,8 @@ const PopupItem = ({ item, isOpen, onClose, shop }) => {
               {item.description}
             </p>
 
-            {/* Preparation Time */}
-            {item.preparationTime && (
-              <div className="flex items-center text-gray-500">
-                <Clock className="w-4 h-4 mr-1" />
-                <span className="text-sm">{item.preparationTime} minutes</span>
-              </div>
-            )}
+            {/* Footer Information */}
+            {renderFooterInfo()}
           </div>
         </div>
       </DialogContent>

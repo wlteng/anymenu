@@ -5,6 +5,8 @@ import { LoadingSpinner } from '../ui/loading';
 import Header from '../Layout/Header';
 import { ArrowLeft } from 'lucide-react';
 import { getShopByUsername, getStores } from '../../firebase/utils';
+import { collection, query, where, getDocs, and } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 const StoreSelector = () => {
   const { username } = useParams();
@@ -13,10 +15,29 @@ const StoreSelector = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [shop, setShop] = useState(null);
   const [stores, setStores] = useState([]);
+  const [menuItemCounts, setMenuItemCounts] = useState({});
 
   useEffect(() => {
     loadShopAndStores();
   }, [username]);
+
+  const getMenuItemCount = async (shopId, storeId) => {
+    try {
+      // For food courts, we need both shopId and storeId
+      const menuItemsQuery = query(
+        collection(db, 'menuItems'),
+        and(
+          where('shopId', '==', shopId),
+          where('storeId', '==', storeId)
+        )
+      );
+      const snapshot = await getDocs(menuItemsQuery);
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error getting menu item count:', error);
+      return 0;
+    }
+  };
 
   const loadShopAndStores = async () => {
     setIsLoading(true);
@@ -37,6 +58,16 @@ const StoreSelector = () => {
       if (shopData.shopType === 'Food Court') {
         const storesData = await getStores(shopData.id);
         setStores(storesData);
+
+        // Get menu item counts for each store
+        const counts = {};
+        await Promise.all(
+          storesData.map(async (store) => {
+            // Pass both shopId and storeId for counting menu items
+            counts[store.id] = await getMenuItemCount(shopData.id, store.id);
+          })
+        );
+        setMenuItemCounts(counts);
       }
     } catch (error) {
       showToast({
@@ -106,7 +137,12 @@ const StoreSelector = () => {
                   </div>
                 )}
                 <div className="text-left">
-                  <h3 className="font-semibold">{store.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{store.name}</h3>
+                    <span className="text-sm text-gray-500">
+                      ({menuItemCounts[store.id] || 0} items)
+                    </span>
+                  </div>
                   {store.storeNumber && (
                     <p className="text-sm text-gray-500">Store #{store.storeNumber}</p>
                   )}

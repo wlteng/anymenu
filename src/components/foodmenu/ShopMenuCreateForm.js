@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingSpinner } from '../ui/loading';
 import Header from '../Layout/Header';
-import { Upload, X, ChefHat, Flame, Star } from 'lucide-react';
-import { getShopByUsername, addMenuItem, updateMenuItem } from '../../firebase/utils';
+import { Upload, X } from 'lucide-react';
+import { 
+  getShopByUsername, 
+  addMenuItem, 
+  updateMenuItem, 
+  getMenuItems 
+} from '../../firebase/utils';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { foodSpecialties } from '../../data/general';
+import * as Icons from 'lucide-react';
 
 const ShopMenuCreateForm = () => {
   const { username, category, itemId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const storeId = searchParams.get('store');
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [shop, setShop] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [existingItemCodes, setExistingItemCodes] = useState([]);
+  const [itemCodeError, setItemCodeError] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -35,6 +46,7 @@ const ShopMenuCreateForm = () => {
     if (itemId) {
       loadItem();
     }
+    loadExistingItemCodes();
   }, [username, itemId]);
 
   const loadShop = async () => {
@@ -60,6 +72,43 @@ const ShopMenuCreateForm = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  const renderSpecialtyTag = (specialty) => {
+    const Icon = Icons[specialty.icon];
+    const isActive = formData[specialty.property];
+
+    return (
+      <label key={specialty.id} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer">
+        <input
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setFormData(prev => ({ ...prev, [specialty.property]: e.target.checked }))}
+          className="hidden"
+        />
+        <div className={`p-2 rounded-full ${isActive ? specialty.bgColor : 'bg-gray-100'}`}>
+          <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+        </div>
+        <span className="text-sm">{specialty.label}</span>
+      </label>
+    );
+  };
+
+  const loadExistingItemCodes = async () => {
+    try {
+      const menuItems = await getMenuItems(shop?.id);
+      const codes = menuItems
+        .map(item => item.itemCode)
+        .filter(code => code && code !== '');
+      setExistingItemCodes(codes);
+    } catch (error) {
+      console.error('Error loading existing item codes:', error);
+    }
+  };
+
+  const validateItemCode = (code) => {
+    if (!code) return true; // Optional field
+    if (isEditMode && formData.itemCode === code) return true; // Same code in edit mode
+    return !existingItemCodes.includes(code);
   };
 
   const loadItem = async () => {
@@ -108,6 +157,12 @@ const ShopMenuCreateForm = () => {
     e.preventDefault();
     if (!shop) return;
 
+    // Validate item code if provided
+    if (formData.itemCode && !validateItemCode(formData.itemCode)) {
+      setItemCodeError('This item code is already in use');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const submissionData = {
@@ -116,6 +171,11 @@ const ShopMenuCreateForm = () => {
         promotionalPrice: formData.promotionalPrice ? parseFloat(formData.promotionalPrice) : null,
         category: category,
       };
+
+      // Add storeId for food court shops
+      if (shop.shopType === 'Food Court' && storeId) {
+        submissionData.storeId = storeId;
+      }
 
       if (isEditMode) {
         await updateMenuItem(itemId, submissionData, formData.imageFile);
@@ -139,6 +199,15 @@ const ShopMenuCreateForm = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleItemCodeChange = (e) => {
+    const newCode = e.target.value;
+    setFormData(prev => ({ ...prev, itemCode: newCode }));
+    setItemCodeError('');
+    if (newCode && !validateItemCode(newCode)) {
+      setItemCodeError('This item code is already in use');
     }
   };
 
@@ -224,10 +293,13 @@ const ShopMenuCreateForm = () => {
             <input
               type="text"
               value={formData.itemCode}
-              onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
-              className="w-full p-2 border rounded-lg"
+              onChange={handleItemCodeChange}
+              className={`w-full p-2 border rounded-lg ${itemCodeError ? 'border-red-500' : ''}`}
               placeholder="e.g., A1, B2, etc."
             />
+            {itemCodeError && (
+              <p className="text-sm text-red-500 mt-1">{itemCodeError}</p>
+            )}
           </div>
 
           {/* Pricing */}
@@ -262,14 +334,14 @@ const ShopMenuCreateForm = () => {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
+              Description (Optional)
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full p-2 border rounded-lg"
               rows="3"
-              required
+              placeholder="Enter item description"
             />
           </div>
 
@@ -289,44 +361,7 @@ const ShopMenuCreateForm = () => {
 
           {/* Tags */}
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isSpicy}
-                onChange={(e) => setFormData({ ...formData, isSpicy: e.target.checked })}
-                className="hidden"
-              />
-              <div className={`p-2 rounded-full ${formData.isSpicy ? 'bg-red-500' : 'bg-gray-100'}`}>
-                <Flame className={`w-4 h-4 ${formData.isSpicy ? 'text-white' : 'text-gray-500'}`} />
-              </div>
-              <span className="text-sm">Spicy</span>
-            </label>
-
-            <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isChefRecommended}
-                onChange={(e) => setFormData({ ...formData, isChefRecommended: e.target.checked })}
-                className="hidden"
-              />
-              <div className={`p-2 rounded-full ${formData.isChefRecommended ? 'bg-yellow-500' : 'bg-gray-100'}`}>
-                <ChefHat className={`w-4 h-4 ${formData.isChefRecommended ? 'text-white' : 'text-gray-500'}`} />
-              </div>
-              <span className="text-sm">Chef's Choice</span>
-            </label>
-
-            <label className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isPopular}
-                onChange={(e) => setFormData({ ...formData, isPopular: e.target.checked })}
-                className="hidden"
-              />
-              <div className={`p-2 rounded-full ${formData.isPopular ? 'bg-purple-500' : 'bg-gray-100'}`}>
-                <Star className={`w-4 h-4 ${formData.isPopular ? 'text-white' : 'text-gray-500'}`} />
-              </div>
-              <span className="text-sm">Popular</span>
-            </label>
+            {foodSpecialties.map(specialty => renderSpecialtyTag(specialty))}
           </div>
 
           {/* Submit Button */}
@@ -340,7 +375,7 @@ const ShopMenuCreateForm = () => {
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || Boolean(itemCodeError)}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
               {isLoading && <LoadingSpinner />}

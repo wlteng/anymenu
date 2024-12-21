@@ -3,8 +3,14 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingSpinner } from '../ui/loading';
 import Header from '../Layout/Header';
-import { getMenuItems, getShopByUsername, deleteMenuItem, updateMenuItem, getStores } from '../../firebase/utils';
-import { Plus, Trash2, Edit, ChefHat, Flame, Star } from 'lucide-react';
+import { 
+  getMenuItems, 
+  getShopByUsername, 
+  deleteMenuItem, 
+  updateMenuItem, 
+  getStores 
+} from '../../firebase/utils';
+import { Plus, Trash2, Edit, ChefHat, Flame, Star, Store } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 
 const ShopMenuCreator = () => {
@@ -20,6 +26,7 @@ const ShopMenuCreator = () => {
   const [currentStore, setCurrentStore] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [editingItemCode, setEditingItemCode] = useState(null);
+  const [existingItemCodes, setExistingItemCodes] = useState([]);
 
   useEffect(() => {
     loadShopAndMenuItems();
@@ -63,8 +70,21 @@ const ShopMenuCreator = () => {
       }
 
       // Load menu items for the shop or specific store
-      const items = await getMenuItems(storeId || shopData.id);
-      setMenuItems(items);
+      const items = await getMenuItems(shopData.id);
+      
+      // Filter items by storeId if in food court mode
+      const filteredItems = shopData.shopType === 'Food Court' && storeId
+        ? items.filter(item => item.storeId === storeId)
+        : items;
+
+      setMenuItems(filteredItems);
+
+      // Collect all existing item codes
+      const codes = items
+        .filter(item => item.itemCode)
+        .map(item => item.itemCode);
+      setExistingItemCodes(codes);
+
     } catch (error) {
       showToast({
         title: 'Error',
@@ -97,8 +117,25 @@ const ShopMenuCreator = () => {
     }
   };
 
+  const validateItemCode = (code, currentItemId) => {
+    if (!code) return true; // Optional field
+    return !existingItemCodes.some(existingCode => 
+      existingCode === code && 
+      menuItems.find(item => item.itemCode === code)?.id !== currentItemId
+    );
+  };
+
   const handleItemCodeChange = async (itemId, newCode) => {
     try {
+      if (!validateItemCode(newCode, itemId)) {
+        showToast({
+          title: 'Error',
+          description: 'This item code is already in use',
+          type: 'error'
+        });
+        return;
+      }
+
       const item = menuItems.find(item => item.id === itemId);
       if (!item) return;
 
@@ -254,6 +291,12 @@ const ShopMenuCreator = () => {
                 >
                   Back
                 </button>
+                {currentStore && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Store className="w-4 h-4" />
+                    <span>{currentStore.name}</span>
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleAddItem}
