@@ -1,3 +1,35 @@
+import { Utensils, Store, Sparkles, Scissors } from 'lucide-react';
+
+export const getShopTypeIcon = (iconName) => {
+  const icons = {
+    Utensils: Utensils,
+    Store: Store,
+    Sparkles: Sparkles,
+    Scissors: Scissors,
+    // Add Spa icon fallback to Sparkles for now
+    Spa: Sparkles
+  };
+
+  return icons[iconName] || Store;
+};
+
+export const shopTypes = [
+  { 
+    value: "Restaurant", 
+    label: "Restaurant",
+    icon: "Utensils",
+    description: "Perfect for restaurants, cafes, and eateries serving delicious meals to customers. Ideal for showcasing your menu items with images, descriptions, and prices.",
+    features: ["Simple Straight Forward"]
+  },
+  { 
+    value: "Food Court", 
+    label: "Food Court",
+    icon: "Store",
+    description: "Manage multiple food stalls or vendors under one roof. Each store can have its own menu, making it perfect for food courts, markets, or collaborative spaces.",
+    features: ["Multiple store management", "Individual menus", "Store profiles", "Centralized ordering"]
+  }
+  
+];
 // Food Specialties with icons
 export const foodSpecialties = [
   {
@@ -29,14 +61,7 @@ export const foodSpecialties = [
     property: 'isPopular'
   }
 ];
-// Shop Types
-export const shopTypes = [
-  { value: "Restaurant", label: "Restaurant" },
-  { value: "Food Court", label: "Food Court" },
-  { value: "Massage Services", label: "Massage Services" },
-  { value: "Beauty Services", label: "Beauty Services" },
-  { value: "Hair Salon", label: "Hair Salon" }
-];
+
 
 export const availableCategories = [
   { value: "Appetizers", label: "Appetizers" },

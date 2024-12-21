@@ -7,8 +7,9 @@ import { LoadingSpinner, LoadingOverlay } from '../ui/loading';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usernameUtils } from '../../firebase/username-utils';
-import { availableCategories } from '../../data/general';
+import { availableCategories, shopTypes } from '../../data/general';
 import { Check, X } from 'lucide-react';
+import ShopTypeDialog from './ShopTypeDialog';
 
 const SetupDialog = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const SetupDialog = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     shopName: '',
     username: '',
+    shopType: '',
     categories: []
   });
 
@@ -92,6 +94,15 @@ const SetupDialog = ({ isOpen, onClose }) => {
       }
     }
 
+    if (step === 2 && !formData.shopType) {
+      showToast({
+        title: 'Error',
+        description: 'Please select a shop type',
+        type: 'error'
+      });
+      return;
+    }
+
     setStep(prev => prev + 1);
   };
 
@@ -114,6 +125,15 @@ const SetupDialog = ({ isOpen, onClose }) => {
       return;
     }
 
+    if (!formData.shopType) {
+      showToast({
+        title: 'Error',
+        description: 'Please select a shop type',
+        type: 'error'
+      });
+      return;
+    }
+
     if (formData.categories.length === 0) {
       showToast({
         title: 'Error',
@@ -129,7 +149,8 @@ const SetupDialog = ({ isOpen, onClose }) => {
       await createShop({
         name: formData.shopName,
         username: formData.username,
-        categories: formData.categories, // This will now be array of strings
+        shopType: formData.shopType,
+        categories: formData.categories,
         createdAt: new Date(),
         lastUsernameChange: new Date()
       }, user.uid);
@@ -160,11 +181,15 @@ const SetupDialog = ({ isOpen, onClose }) => {
                formData.username.trim() !== '' && 
                usernameStatus.isAvailable;
       case 2:
+        return formData.shopType !== '';
+      case 3:
         return formData.categories.length > 0;
       default:
         return true;
     }
   };
+
+  
 
   const renderStep = () => {
     switch (step) {
@@ -194,9 +219,7 @@ const SetupDialog = ({ isOpen, onClose }) => {
             </DialogHeader>
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Shop Name
-                </label>
+                
                 <input
                   type="text"
                   value={formData.shopName}
@@ -206,9 +229,7 @@ const SetupDialog = ({ isOpen, onClose }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
+                
                 <div className="space-y-2">
                   <div className="flex items-center">
                     <span className="text-gray-500 mr-2">domain.com/</span>
@@ -251,34 +272,44 @@ const SetupDialog = ({ isOpen, onClose }) => {
         );
 
       case 2:
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle>Choose Categories</DialogTitle>
-      </DialogHeader>
-      <div className="grid grid-cols-2 gap-2">
-        {availableCategories.map(category => (
-          <label
-            key={category.value}
-            className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-          >
-            <input
-              type="checkbox"
-              checked={formData.categories.includes(category.value)}
-              onChange={() => {
-                const newCategories = formData.categories.includes(category.value)
-                  ? formData.categories.filter(c => c !== category.value)
-                  : [...formData.categories, category.value];
-                setFormData({...formData, categories: newCategories});
-              }}
-              className="mr-2"
-            />
-            {category.label}
-          </label>
-        ))}
-      </div>
-    </>
-  );
+        return <ShopTypeDialog 
+          formData={formData} 
+          setFormData={setFormData} 
+        />;
+
+      case 3:
+        return (
+          <>
+            <DialogHeader>
+              <DialogTitle>Choose Categories</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-2">
+              {availableCategories.map(category => (
+                <label
+                  key={category.value}
+                  className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                    formData.categories.includes(category.value) 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : ''
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.categories.includes(category.value)}
+                    onChange={() => {
+                      const newCategories = formData.categories.includes(category.value)
+                        ? formData.categories.filter(c => c !== category.value)
+                        : [...formData.categories, category.value];
+                      setFormData({...formData, categories: newCategories});
+                      }}
+                    className="mr-2"
+                  />
+                  {category.label}
+                </label>
+              ))}
+            </div>
+          </>
+        );
 
       default:
         return null;
@@ -300,7 +331,7 @@ const SetupDialog = ({ isOpen, onClose }) => {
                   >
                     Back
                   </button>
-                  {step < 2 ? (
+                  {step < 3 ? (
                     <button
                       onClick={handleNext}
                       disabled={!canProceedToNext()}

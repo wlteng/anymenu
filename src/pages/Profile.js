@@ -3,22 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { signOutUser } from '../firebase/auth'; // Import the actual signOut function
 import Menu from '../components/Layout/Menu';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await signOutUser(); // Use the imported signOut function
       showToast({
         title: 'Success',
         description: 'Successfully logged out!'
       });
-      navigate('/');
+      navigate('/', { replace: true }); // Use replace to prevent going back to profile
     } catch (error) {
+      console.error('Logout error:', error);
       showToast({
         title: 'Error',
         description: 'Failed to logout. Please try again.',
@@ -47,7 +49,7 @@ const Profile = () => {
               <img
                 src={user.photoURL}
                 alt={user.displayName || 'User'}
-                className="w-20 h-20 rounded-full"
+                className="w-20 h-20 rounded-full object-cover"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
