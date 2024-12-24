@@ -7,16 +7,6 @@ import Template3 from './templates/Template3';
 const ShopMenu = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('template1');
   
-  // Define a mock shop for the sample data
-  const sampleShop = {
-    id: 'sample-shop',
-    name: 'Sample Restaurant',
-    username: 'sample-restaurant',
-    defaultTemplate: 'template1',
-    squareLogo: '/img/sample/logo-square.jpg',
-    rectangleLogo: '/img/sample/logo-rectangle.jpg'
-  };
-  
   // Extended sample menu items with a mix of regular and promotional items
   const menuItems = [
     {
@@ -29,8 +19,7 @@ const ShopMenu = () => {
       isSpicy: true,
       isChefRecommended: true,
       image: "/img/sample/1.jpg",
-      preparationTime: "15-20",
-      shopId: sampleShop.id
+      preparationTime: "15-20"
     },
     {
       id: 'item-2',
@@ -40,8 +29,7 @@ const ShopMenu = () => {
       description: "Atlantic salmon with seasonal vegetables and herbs",
       isChefRecommended: true,
       image: "/img/sample/2.jpg",
-      preparationTime: "20-25",
-      shopId: sampleShop.id
+      preparationTime: "20-25"
     },
     {
       id: 'item-3',
@@ -50,8 +38,7 @@ const ShopMenu = () => {
       price: 10.99,
       description: "Crisp romaine lettuce with traditional Caesar dressing",
       image: "/img/sample/3.jpg",
-      preparationTime: "10-15",
-      shopId: sampleShop.id
+      preparationTime: "10-15"
     },
     {
       id: 'item-4',
@@ -63,8 +50,7 @@ const ShopMenu = () => {
       isChefRecommended: true,
       isPopular: true,
       image: "/img/sample/4.jpg",
-      preparationTime: "25-30",
-      shopId: sampleShop.id
+      preparationTime: "25-30"
     },
     {
       id: 'item-5',
@@ -74,8 +60,7 @@ const ShopMenu = () => {
       description: "Warm chocolate cake with molten center",
       isPopular: true,
       image: "/img/sample/5.jpg",
-      preparationTime: "15-20",
-      shopId: sampleShop.id
+      preparationTime: "15-20"
     },
     {
       id: 'item-6',
@@ -85,8 +70,7 @@ const ShopMenu = () => {
       promotionalPrice: 4.99,
       description: "Traditional Japanese matcha ice cream",
       image: "/img/sample/6.jpg",
-      preparationTime: "5",
-      shopId: sampleShop.id
+      preparationTime: "5"
     },
     {
       id: 'item-7',
@@ -97,8 +81,7 @@ const ShopMenu = () => {
       isSpicy: true,
       isPopular: true,
       image: "/img/sample/7.jpg",
-      preparationTime: "15-20",
-      shopId: sampleShop.id
+      preparationTime: "15-20"
     },
     {
       id: 'item-8',
@@ -107,8 +90,7 @@ const ShopMenu = () => {
       price: 7.99,
       description: "Blend of seasonal fruits with yogurt",
       image: "/img/sample/8.jpg",
-      preparationTime: "5-10",
-      shopId: sampleShop.id
+      preparationTime: "5-10"
     },
     {
       id: 'item-9',
@@ -119,8 +101,7 @@ const ShopMenu = () => {
       description: "Freshly brewed premium coffee beans",
       isPopular: true,
       image: "/img/sample/9.jpg",
-      preparationTime: "5",
-      shopId: sampleShop.id
+      preparationTime: "5"
     },
     {
       id: 'item-10',
@@ -129,14 +110,28 @@ const ShopMenu = () => {
       price: 11.99,
       description: "Assorted vegetables in light crispy batter",
       image: "/img/sample/10.jpg",
-      preparationTime: "15-20",
-      shopId: sampleShop.id
+      preparationTime: "15-20"
     }
   ];
+
+  // Extract unique categories from menu items
+  const uniqueCategories = [...new Set(menuItems.map(item => item.category))];
+  
+  // Define a mock shop for the sample data with categories
+  const sampleShop = {
+    id: 'sample-shop',
+    name: 'Sample Restaurant',
+    username: 'sample-restaurant',
+    defaultTemplate: 'template1',
+    squareLogo: '/img/sample/logo-square.jpg',
+    rectangleLogo: '/img/sample/logo-rectangle.jpg',
+    categories: uniqueCategories // Add categories here
+  };
 
   // Ensure each menu item has the shop data embedded
   const menuItemsWithShop = menuItems.map(item => ({
     ...item,
+    shopId: sampleShop.id,
     shop: sampleShop
   }));
 

@@ -6,13 +6,63 @@ import { signInWithGoogle } from '../../../firebase/auth';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { LoadingSpinner } from '../../ui/loading';
-import { getUserShops } from '../../../firebase/utils';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../ui/alert';
 import MyShopButton from './MyShopButton';
 import CreateMenuButton from './CreateMenuButton';
 import RecentShops from './RecentShops';
 import LoveFood from './LoveFood';
 
+const PreviewMenuPanel = ({ isOpen, onClose, shop }) => {
+  const navigate = useNavigate();
+
+  if (!shop) return null;
+
+  return (
+    <div className={`fixed inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+      isOpen ? 'translate-x-0' : '-translate-x-full'
+    } z-50`}>
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="text-xl font-bold">Menu</h2>
+        <button 
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-full"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-auto">
+        <div className="p-6">
+          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg mb-6">
+            {shop.squareLogo ? (
+              <img 
+                src={shop.squareLogo} 
+                alt={shop.name}
+                className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                onClick={() => navigate(`/${shop.username}`)}
+              />
+            ) : (
+              <div 
+                className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer"
+                onClick={() => navigate(`/${shop.username}`)}
+              >
+                <span className="text-2xl text-gray-500">
+                  {shop.name.charAt(0)}
+                </span>
+              </div>
+            )}
+            <div>
+              <div className="font-medium text-lg">{shop.name}</div>
+              <div className="text-sm text-gray-500">anymenu.info/{shop.username}</div>
+            </div>
+          </div>
+
+          <LoveFood />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null, isDarkHeader = false }) => {
   const navigate = useNavigate();
@@ -22,15 +72,8 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasShops, setHasShops] = useState(false);
-  const [recentShops, setRecentShops] = useState([]);
-  const [favoriteItems, setFavoriteItems] = useState([]);
 
   useEffect(() => {
-    if (!preview) {
-      checkUserShops();
-    }
-
     // Handle body scroll and backdrop when menu is open
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -44,21 +87,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
       document.body.style.overflow = 'unset';
       document.body.classList.remove('menu-open');
     };
-  }, [user, preview, isOpen]);
-
-  const checkUserShops = async () => {
-    if (!user) {
-      setHasShops(false);
-      return;
-    }
-    try {
-      const shops = await getUserShops(user.uid);
-      setHasShops(shops.length > 0);
-      setRecentShops(shops);
-    } catch (error) {
-      console.error('Error checking shops:', error);
-    }
-  };
+  }, [isOpen]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -90,15 +119,9 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
     setIsOpen(false);
   };
 
-  const handleMyShopsClick = () => {
-    setIsOpen(false);
-    navigate('/my-shops');
-  };
-
   const renderUserProfile = () => {
     if (!user) return (
       <div className="p-4 space-y-4">
-        {/* Google Login Button */}
         <button
           onClick={handleGoogleLogin}
           disabled={isLoading}
@@ -118,7 +141,6 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
           )}
         </button>
 
-        {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -128,13 +150,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
           </div>
         </div>
 
-        {/* Create Menu Button */}
-        <button
-          onClick={handleCreateMenu}
-          className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-        >
-          Create Free Menu
-        </button>
+        <CreateMenuButton onClick={handleCreateMenu} />
       </div>
     );
     
@@ -169,6 +185,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
     );
   };
 
+  // Preview mode render
   if (preview && shop) {
     return (
       <>
@@ -180,52 +197,12 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
           <MenuIcon className="w-6 h-6" />
         </button>
 
-        {/* Preview Menu Content */}
-        <div className={`fixed inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } z-50`}>
-          <div className="flex justify-between items-center p-4 border-b">
-            <h2 className="text-xl font-bold">Menu</h2>
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded-full"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+        <PreviewMenuPanel 
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          shop={shop}
+        />
 
-          <div className="flex flex-col h-[calc(100vh-64px)] overflow-auto">
-            <div className="p-6">
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg mb-6">
-                {shop.squareLogo ? (
-                  <img 
-                    src={shop.squareLogo} 
-                    alt={shop.name}
-                    className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                    onClick={() => navigate(`/${shop.username}`)}
-                  />
-                ) : (
-                  <div 
-                    className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer"
-                    onClick={() => navigate(`/${shop.username}`)}
-                  >
-                    <span className="text-2xl text-gray-500">
-                      {shop.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-                <div>
-                  <div className="font-medium text-lg">{shop.name}</div>
-                  <div className="text-sm text-gray-500">domain.com/{shop.username}</div>
-                </div>
-              </div>
-
-              {user && <LoveFood items={favoriteItems} />}
-            </div>
-          </div>
-        </div>
-
-        {/* Backdrop for preview */}
         {isOpen && (
           <div 
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
@@ -238,7 +215,6 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
 
   return (
     <>
-      {/* Menu Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
         className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors`}
@@ -247,7 +223,6 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
         <MenuIcon className="w-6 h-6" />
       </button>
 
-      {/* Backdrop with blur */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
@@ -255,7 +230,6 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
         />
       )}
 
-      {/* Menu Panel */}
       <div 
         className={`fixed inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
@@ -279,25 +253,20 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
 
             {user && (
               <>
-                {!hasShops ? (
-                  <div className="text-center p-5">
-                    <CreateMenuButton onClick={handleCreateMenu} />
-                  </div>
-                ) : (
-                  <div className="border-b">
-                    <MyShopButton onClick={handleMyShopsClick} />
-                  </div>
-                )}
-
-                <RecentShops shops={recentShops} />
-                <LoveFood items={favoriteItems} />
+                <div className="border-b">
+                  <MyShopButton onClick={() => {
+                    setIsOpen(false);
+                    navigate('/my-shops');
+                  }} />
+                </div>
+                <RecentShops />
+                <LoveFood />
               </>
             )}
           </div>
         </div>
       </div>
 
-      {/* Login Prompt Dialog */}
       <AlertDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
         <AlertDialogContent>
           <AlertDialogTitle>Login Required</AlertDialogTitle>
@@ -333,16 +302,11 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Setup Dialog */}
       <SetupDialog 
         isOpen={setupDialogOpen}
-        onClose={() => {
-          setSetupDialogOpen(false);
-          checkUserShops();
-        }}
+        onClose={() => setSetupDialogOpen(false)}
       />
 
-      {/* Global styles for blur effect */}
       <style>{`
         body.menu-open .main-content {
           filter: blur(4px);

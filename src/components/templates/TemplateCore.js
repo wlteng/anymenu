@@ -157,7 +157,7 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
 
     return (
       <div className="overflow-x-auto">
-        <div className="flex space-x-4 px-4 py-4">
+        <div className="flex space-x-4 px-4 py-2">
           <button
             onClick={() => setSelectedStore('All')}
             className={`
@@ -236,7 +236,7 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
 
     return (
       <div className="overflow-x-auto">
-        <div className="flex space-x-4 px-4 pb-4">
+        <div className="flex space-x-4 px-4 py-2">
           {categories.map((category) => {
             const isString = typeof category === 'string';
             const categoryId = isString ? category : category.id;

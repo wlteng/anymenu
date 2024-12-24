@@ -1,9 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import { getUserShops } from '../../../firebase/utils';
+import { LoadingSpinner } from '../../ui/loading';
 
-const RecentShops = ({ shops }) => {
-  const navigate = useNavigate();
+const RecentShops = () => {
+  const { user } = useAuth();
+  const [shops, setShops] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadShops = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const userShops = await getUserShops(user.uid);
+        setShops(userShops);
+      } catch (error) {
+        console.error('Error loading shops:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadShops();
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-4">
+        <LoadingSpinner size="w-6 h-6" />
+      </div>
+    );
+  }
+
+  if (shops.length === 0) {
+    return null;
+  }
 
   return (
     <div className="p-4 border-b">
@@ -15,7 +49,7 @@ const RecentShops = ({ shops }) => {
         {shops.map((shop) => (
           <div 
             key={shop.id} 
-            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer"
+            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
             onClick={() => window.open(`/${shop.username}`, '_blank')}
           >
             {shop.squareLogo ? (
@@ -23,6 +57,10 @@ const RecentShops = ({ shops }) => {
                 src={shop.squareLogo} 
                 alt={shop.name}
                 className="w-12 h-12 object-cover rounded-lg"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                }}
               />
             ) : (
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -31,7 +69,7 @@ const RecentShops = ({ shops }) => {
             )}
             <div>
               <div className="font-medium">{shop.name}</div>
-              <div className="text-sm text-gray-500">domain.com/{shop.username}</div>
+              <div className="text-sm text-gray-500">anymenu.info/{shop.username}</div>
             </div>
           </div>
         ))}

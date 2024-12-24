@@ -100,7 +100,7 @@ const StoreSelector = () => {
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={() => navigate('/my-shops')}
-            className="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg flex items-center gap-2"
+            className="text-gray-600 hover:bg-gray-100 rounded-lg flex items-center gap-2"
           >
             <ArrowLeft className="w-5 h-5" />
             Back
@@ -123,7 +123,7 @@ const StoreSelector = () => {
               <button
                 key={store.id}
                 onClick={() => handleStoreSelect(store)}
-                className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow flex items-center gap-4"
+                className="bg-white rounded-lg shadow hover:shadow-md transition-shadow flex items-center gap-4"
               >
                 {store.storeImage ? (
                   <img 

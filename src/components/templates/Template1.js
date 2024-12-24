@@ -18,7 +18,7 @@ const Template1 = ({ menuItems = [], shop = null }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="sticky top-0 bg-white shadow-sm z-40">
+      <div className="sticky top-0 bg-white shadow-sm z-40 [&:not(:first-child)]:pt-4">
         <StoreNavigation />
         <CategoryNavigation />
       </div>

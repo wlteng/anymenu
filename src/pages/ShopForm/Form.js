@@ -117,7 +117,7 @@ const Form = ({
           <div className="relative">
             <div className="flex h-12">
               <span className="inline-flex items-center px-4 rounded-l-lg border border-gray-300 bg-gray-50 text-gray-500 text-sm whitespace-nowrap">
-                domain.com/
+                anymenu.info/
               </span>
               <input
                 type="text"
