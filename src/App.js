@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContextProvider } from './contexts/ToastContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// Page & Component Imports
 import ShopMenu from './components/ShopMenu';
 import MenuPreview from './components/foodmenu/MenuPreview';
 import ShopManager from './components/foodmenu/ShopManager';
@@ -12,6 +14,7 @@ import StoreSelector from './components/foodmenu/StoreSelector';
 import LoveFoodPage from './pages/LoveFoodPage';
 import ShopForm from './pages/ShopForm';
 import Profile from './pages/Profile';
+import CompanyInfo from './components/foodmenu/CompanyInfo';
 
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -25,11 +28,12 @@ function App() {
       <ToastContextProvider>
         <Router>
           <Routes>
-            {/* Public routes */}
+            {/* Public Routes */}
             <Route path="/" element={<ShopMenu />} />
             <Route path="/:username" element={<MenuPreview />} />
 
-            {/* Private routes */}
+            {/* Private Routes */}
+            {/* Profile */}
             <Route 
               path="/profile" 
               element={
@@ -38,6 +42,8 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
+            {/* Shop Management */}
             <Route 
               path="/my-shops" 
               element={
@@ -46,6 +52,7 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
             <Route 
               path="/my-shops/:username/edit" 
               element={
@@ -54,6 +61,18 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
+            {/* Company Info - Move this route to be more specific */}
+            <Route 
+              path="/my-shops/:username/company-info" 
+              element={
+                <PrivateRoute>
+                  <CompanyInfo />
+                </PrivateRoute>
+              } 
+            />
+
+            {/* Store Management */}
             <Route 
               path="/my-shops/:username/stores" 
               element={
@@ -62,6 +81,8 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
+            {/* Menu Management */}
             <Route 
               path="/menu/:username/store-select" 
               element={
@@ -70,6 +91,7 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
             <Route 
               path="/menu/:username" 
               element={
@@ -78,6 +100,7 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
             <Route 
               path="/menu/:username/:category/add" 
               element={
@@ -86,6 +109,7 @@ function App() {
                 </PrivateRoute>
               } 
             />
+
             <Route 
               path="/menu/:username/:category/:itemId" 
               element={
@@ -94,14 +118,8 @@ function App() {
                 </PrivateRoute>
               } 
             />
-            <Route 
-              path="/dashboard" 
-              element={
-                <PrivateRoute>
-                  <ShopMenu />
-                </PrivateRoute>
-              } 
-            />
+
+            {/* Additional Features */}
             <Route 
               path="/love-food" 
               element={
@@ -111,7 +129,7 @@ function App() {
               } 
             />
             
-            {/* Catch all route - redirect to home */}
+            {/* Catch All - Redirect to Home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

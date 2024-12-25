@@ -20,7 +20,7 @@ const PreviewMenuPanel = ({ isOpen, onClose, shop }) => {
   return (
     <div className={`fixed inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
       isOpen ? 'translate-x-0' : '-translate-x-full'
-    } z-50`}>
+    } z-[60]`}>
       <div className="flex justify-between items-center p-4 border-b">
         <h2 className="text-xl font-bold">Menu</h2>
         <button 
@@ -74,18 +74,14 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Handle body scroll and backdrop when menu is open
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.classList.add('menu-open');
     } else {
       document.body.style.overflow = 'unset';
-      document.body.classList.remove('menu-open');
     }
 
     return () => {
       document.body.style.overflow = 'unset';
-      document.body.classList.remove('menu-open');
     };
   }, [isOpen]);
 
@@ -191,7 +187,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
       <>
         <button
           onClick={() => setIsOpen(true)}
-          className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors`}
+          className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors relative z-[51]`}
           aria-label="Menu"
         >
           <MenuIcon className="w-6 h-6" />
@@ -205,7 +201,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
 
         {isOpen && (
           <div 
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[50]"
             onClick={() => setIsOpen(false)}
           />
         )}
@@ -217,7 +213,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors`}
+        className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors relative z-[51]`}
         aria-label="Menu"
       >
         <MenuIcon className="w-6 h-6" />
@@ -225,7 +221,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
 
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[50]"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -233,7 +229,7 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
       <div 
         className={`fixed inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } z-50`}
+        } z-[60]`}
       >
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-bold text-gray-900">Menu</h2>
@@ -306,18 +302,6 @@ const Menu = ({ onTemplateChange, currentTemplate, preview = false, shop = null,
         isOpen={setupDialogOpen}
         onClose={() => setSetupDialogOpen(false)}
       />
-
-      <style>{`
-        body.menu-open .main-content {
-          filter: blur(4px);
-          pointer-events: none;
-          user-select: none;
-        }
-
-        .main-content {
-          transition: filter 0.3s ease-in-out;
-        }
-      `}</style>
     </>
   );
 };

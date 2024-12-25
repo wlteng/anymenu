@@ -7,6 +7,7 @@ import Template1 from '../templates/Template1';
 import Template2 from '../templates/Template2';
 import Template3 from '../templates/Template3';
 import Header from '../Layout/Header';
+import SeoMeta from '../common/SeoMeta';  // 👈 Add this import
 
 const MenuPreview = () => {
   const { username } = useParams();
@@ -101,16 +102,16 @@ const MenuPreview = () => {
   };
 
   return (
-    
-        <div className="min-h-screen bg-gray-50">
-          <Header 
-            shop={shop}
-            onTemplateChange={setSelectedTemplate}
-            currentTemplate={selectedTemplate}
-            isDarkHeader={shop?.isDarkHeader || false}
-          />
-          {renderTemplate()}
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <SeoMeta shop={shop} />  {/* 👈 Add this line */}
+      <Header 
+        shop={shop}
+        onTemplateChange={setSelectedTemplate}
+        currentTemplate={selectedTemplate}
+        isDarkHeader={shop?.isDarkHeader || false}
+      />
+      {renderTemplate()}
+    </div>
   );
 };
 

@@ -1,19 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon } from 'lucide-react';
+import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon, Info } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 import { LoadingSpinner } from '../ui/loading';
 import { deleteDoc, query, collection, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useToast } from '../../contexts/ToastContext';
+import CompanyInfo from './CompanyInfo';
+import { useNavigate } from 'react-router-dom';
 
 const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleChange }) => {
+
   const { showToast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [storeCount, setStoreCount] = useState(0);
+  const [showCompanyInfo, setShowCompanyInfo] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -174,6 +179,17 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
                   Edit
                 </button>
 
+                <button
+                  onClick={() => {
+                    navigate(`/my-shops/${shop.username}/company-info`);
+                    setShowDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                >
+                  <Info size={16} className="mr-2" />
+                  Company Info
+                </button>
+
                 {shop.shopType === 'Food Court' && (
                   <button
                     onClick={() => {
@@ -258,6 +274,12 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CompanyInfo 
+        isOpen={showCompanyInfo}
+        onClose={() => setShowCompanyInfo(false)}
+        shop={shop}
+      />
     </>
   );
 };
