@@ -6,7 +6,7 @@ import { getFavoriteItems } from '../../../firebase/utils';
 import { LoadingSpinner } from '../../ui/loading';
 import PopupItem from '../../PopupItem';
 
-const LoveFood = () => {
+const LoveFood = ({ shopId }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [favorites, setFavorites] = useState([]);
@@ -17,17 +17,21 @@ const LoveFood = () => {
     if (user) {
       loadFavorites();
     }
-  }, [user]);
+  }, [user, shopId]);
 
   const loadFavorites = async () => {
     if (!user) return;
     setIsLoading(true);
     try {
       const items = await getFavoriteItems(user.uid);
-      // Each favorite item now contains both item and shop data
-      const processedItems = items.map(favorite => ({
+      // Filter favorites by shop if shopId is provided
+      const filteredItems = shopId
+        ? items.filter(favorite => favorite.item.shopId === shopId)
+        : items;
+
+      const processedItems = filteredItems.map(favorite => ({
         ...favorite.item,
-        shop: favorite.item.shop || {} // Ensure shop object exists
+        shop: favorite.item.shop || {}
       }));
       setFavorites(processedItems);
     } catch (error) {
@@ -73,8 +77,8 @@ const LoveFood = () => {
           )}
         </div>
         
-        {/* Shop logo overlay - only show if valid logo exists */}
-        {hasValidShopLogo && (
+        {/* Only show shop logo if not filtered by shop */}
+        {!shopId && hasValidShopLogo && (
           <div className="absolute right-1 bottom-1 w-6 h-6">
             <img 
               src={item.shop.squareLogo}
@@ -96,7 +100,9 @@ const LoveFood = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Heart className="w-4 h-4" />
-          <h3 className="text-sm font-medium text-gray-900">Favorites</h3>
+          <h3 className="text-sm font-medium text-gray-900">
+            {shopId ? 'Shop Favorites' : 'Favorites'}
+          </h3>
         </div>
         <button 
           onClick={() => navigate('/love-food')}
@@ -113,7 +119,7 @@ const LoveFood = () => {
         </div>
       ) : (
         <p className="text-sm text-gray-500 text-center p-4">
-          No favorite items yet
+          {shopId ? 'No favorite items from this shop yet' : 'No favorite items yet'}
         </p>
       )}
 
