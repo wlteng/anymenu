@@ -32,7 +32,7 @@ const ShopInfoMenu = ({
             user={user}
           />
           <RecentShops />
-          <LoveFood /> {/* Always show LoveFood in user tab */}
+          <LoveFood showAllFavorites={true} /> {/* Show all favorites in user menu */}
         </>
       ) : (
         <NonLogin onSuccess={onClose} />
@@ -43,7 +43,11 @@ const ShopInfoMenu = ({
   const renderShopContent = () => (
     <div className="flex-1 overflow-auto">
       <ShopInfo shop={shop} isSample={isHomePage} />
-      <LoveFood shopId={shop?.id} /> {/* Show shop-specific favorites */}
+      <LoveFood 
+        shopId={shop?.id} 
+        isSample={isHomePage}
+        showAllFavorites={false} /* Show only shop favorites */
+      /> 
     </div>
   );
 

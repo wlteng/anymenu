@@ -21,7 +21,7 @@ const ShopInfo = ({ shop, isSample = false }) => {
   // Sample data for the homepage
   const sampleShop = {
     name: 'Sample Restaurant',
-    username: 'sample-restaurant',
+    username: 'abcshop',
     description: 'Welcome to our restaurant! We serve delicious food made with fresh ingredients. Come experience our wonderful atmosphere and exceptional service.',
     whatsappNumber: '60123456789',
     squareLogo: '/img/logo/applogo.png',  // App logo for sample shop
