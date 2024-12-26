@@ -3,8 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Menu as MenuIcon } from 'lucide-react';
 import ShopInfoMenu from './ShopInfoMenu';
-import ShopInfoMenuSample from './ShopInfoMenuSample';
-import UserMenu from './UserMenu';
 
 const Menu = ({ preview = false, shop = null, isDarkHeader = false }) => {
   const location = useLocation();
@@ -16,15 +14,40 @@ const Menu = ({ preview = false, shop = null, isDarkHeader = false }) => {
                     !['/my-shops', '/profile', '/love-food'].includes(location.pathname);
                     
   const renderMenu = () => {
+    // Homepage - show sample data
     if (isHomePage) {
-      return <ShopInfoMenuSample isOpen={isOpen} onClose={() => setIsOpen(false)} />;
+      return (
+        <ShopInfoMenu 
+          isOpen={isOpen} 
+          onClose={() => setIsOpen(false)} 
+          isHomePage={true}
+          defaultTab="shop"
+        />
+      );
     }
     
+    // Shop page - show shop data
     if (isShopPage) {
-      return <ShopInfoMenu isOpen={isOpen} onClose={() => setIsOpen(false)} shop={shop} user={user} />;
+      return (
+        <ShopInfoMenu 
+          isOpen={isOpen} 
+          onClose={() => setIsOpen(false)} 
+          shop={shop} 
+          user={user}
+          defaultTab="shop"
+        />
+      );
     }
 
-    return <UserMenu isOpen={isOpen} onClose={() => setIsOpen(false)} user={user} />;
+    // Other pages - show user menu
+    return (
+      <ShopInfoMenu 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)}
+        user={user}
+        defaultTab="user"
+      />
+    );
   };
 
   return (

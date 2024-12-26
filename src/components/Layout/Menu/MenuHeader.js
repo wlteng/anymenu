@@ -1,7 +1,7 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, User } from 'lucide-react';
 
-const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab }) => {
+const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab, isHomePage }) => {
   const TabButton = ({ type, isActive, onClick }) => (
     <button
       onClick={onClick}
@@ -10,29 +10,42 @@ const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab }) => {
       }`}
     >
       {type === 'shop' ? (
-        shop?.squareLogo ? (
+        isHomePage ? (
+          // Show app logo for homepage
+          <img 
+            src="/img/logo/applogo.png"
+            alt="Sample Restaurant"
+            className="w-7 h-7 object-cover rounded"
+          />
+        ) : shop?.squareLogo ? (
           <img 
             src={shop.squareLogo}
             alt={shop.name}
             className="w-7 h-7 object-cover rounded"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/img/logo/applogo.png';
+            }}
           />
         ) : (
           <div className="w-7 h-7 bg-gray-200 rounded flex items-center justify-center">
-            <span className="text-sm text-gray-600">{shop?.name?.charAt(0)}</span>
+            <span className="text-sm text-gray-600">{shop?.name?.charAt(0) || 'S'}</span>
           </div>
         )
+      ) : user?.photoURL ? (
+        <img 
+          src={user.photoURL}
+          alt={user.displayName || 'User'}
+          className="w-7 h-7 rounded-full"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+          }}
+        />
       ) : (
-        user?.photoURL ? (
-          <img 
-            src={user.photoURL}
-            alt={user.displayName || 'User'}
-            className="w-7 h-7 rounded-full"
-          />
-        ) : (
-          <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-sm text-gray-600">U</span>
-          </div>
-        )
+        <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-gray-600" />
+        </div>
       )}
     </button>
   );
