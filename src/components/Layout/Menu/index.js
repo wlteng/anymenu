@@ -54,7 +54,7 @@ const Menu = ({ preview = false, shop = null, isDarkHeader = false }) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors relative z-[51]`}
+        className={`p-2 ${isDarkHeader ? 'text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} rounded-full transition-colors relative ${isOpen ? 'z-10' : 'z-30'}`}
         aria-label="Menu"
       >
         <MenuIcon className="w-6 h-6" />

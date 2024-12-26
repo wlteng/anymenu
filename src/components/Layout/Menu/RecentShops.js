@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getUserShops } from '../../../firebase/utils';
-import { LoadingSpinner } from '../../ui/loading';
+import { LoadingSpinner } from '../../../components/ui/loading';
+
+const MAX_SHOPS = 3; // Maximum number of recent shops to show
 
 const RecentShops = () => {
   const { user } = useAuth();
@@ -16,7 +18,8 @@ const RecentShops = () => {
       setIsLoading(true);
       try {
         const userShops = await getUserShops(user.uid);
-        setShops(userShops);
+        // Take only the first MAX_SHOPS shops
+        setShops(userShops.slice(0, MAX_SHOPS));
       } catch (error) {
         console.error('Error loading shops:', error);
       } finally {

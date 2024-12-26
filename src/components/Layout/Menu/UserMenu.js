@@ -1,6 +1,6 @@
 import React from 'react';
-import { Store, ChevronRight, UserCircle, Heart, Settings, LogOut } from 'lucide-react';
-import { signInWithGoogle } from '../../../firebase/auth';
+import { Store, ChevronRight, LogOut, UserCircle } from 'lucide-react';
+import { signInWithGoogle, signOutUser } from '../../../firebase/auth';
 import { useToast } from '../../../contexts/ToastContext';
 import { LoadingSpinner } from '../../../components/ui/loading';
 
@@ -63,6 +63,24 @@ const UserMenu = ({ onNavigate, user }) => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOutUser();
+      showToast({
+        title: 'Success',
+        description: 'Successfully logged out!'
+      });
+      onNavigate('/', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      showToast({
+        title: 'Error',
+        description: 'Failed to logout. Please try again.',
+        type: 'error'
+      });
+    }
+  };
+
   const menuItems = user ? [
     {
       icon: Store,
@@ -75,22 +93,11 @@ const UserMenu = ({ onNavigate, user }) => {
       onClick: () => onNavigate('/profile')
     },
     {
-      icon: Heart,
-      label: 'Favorites',
-      onClick: () => onNavigate('/love-food')
-    },
-    {
-      icon: Settings,
-      label: 'Settings',
-      onClick: () => onNavigate('/settings')
-    },
-    {
       icon: LogOut,
       label: 'Logout',
-      onClick: () => {
-        // Add logout logic here
-      },
-      className: 'text-red-600 hover:bg-red-50'
+      onClick: handleLogout,
+      className: 'text-red-600 hover:bg-red-50',
+      rightElement: null
     }
   ] : [];
 

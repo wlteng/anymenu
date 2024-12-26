@@ -51,7 +51,7 @@ const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab, isHomePage }
   );
 
   return (
-    <div className="flex justify-between items-center p-4 border-b">
+    <div className="flex justify-between items-center p-2 border-b">
       <div className="flex items-center gap-2">
         <div className="flex gap-1">
           <TabButton 

@@ -49,7 +49,7 @@ const Template3 = ({ menuItems = [], shop = null }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <div className="sticky top-0 bg-white shadow-sm z-40">
+      <div className="sticky top-0 bg-white shadow-sm z-15">
         <StoreNavigation />
         <CategoryNavigation />
       </div>

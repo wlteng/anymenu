@@ -24,44 +24,15 @@ const ShopInfoMenu = ({
     <div className="flex-1 overflow-auto">
       {user ? (
         <>
-          <div className="p-4 border-b">
-            <button 
-              onClick={() => {
-                navigate('/profile');
-                onClose();
-              }}
-              className="w-full flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-            >
-              {user.photoURL ? (
-                <img 
-                  src={user.photoURL}
-                  alt={user.displayName || 'User'}
-                  className="w-10 h-10 rounded-full"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
-                  }}
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-                  {(user.displayName || 'U').charAt(0)}
-                </div>
-              )}
-              <div className="flex-1 text-left">
-                <div className="font-medium text-base">{user.displayName || 'User'}</div>
-                <div className="text-sm text-gray-500">{user.email}</div>
-              </div>
-            </button>
-          </div>
           <UserMenu 
-            onNavigate={(path) => {
-              navigate(path);
+            onNavigate={(path, options) => {
+              navigate(path, options);
               onClose();
             }}
             user={user}
           />
           <RecentShops />
-          <LoveFood />
+          <LoveFood /> {/* Always show LoveFood in user tab */}
         </>
       ) : (
         <NonLogin onSuccess={onClose} />
@@ -72,7 +43,7 @@ const ShopInfoMenu = ({
   const renderShopContent = () => (
     <div className="flex-1 overflow-auto">
       <ShopInfo shop={shop} isSample={isHomePage} />
-      <LoveFood shopId={shop?.id} />
+      <LoveFood shopId={shop?.id} /> {/* Show shop-specific favorites */}
     </div>
   );
 
