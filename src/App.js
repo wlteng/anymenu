@@ -15,6 +15,7 @@ import LoveFoodPage from './pages/LoveFoodPage';
 import ShopForm from './pages/ShopForm';
 import Profile from './pages/Profile';
 import CompanyInfo from './components/foodmenu/CompanyInfo';
+import RecentShopsPage from './pages/RecentShopsPage';
 
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -62,7 +63,7 @@ function App() {
               } 
             />
 
-            {/* Company Info - Move this route to be more specific */}
+            {/* Company Info */}
             <Route 
               path="/my-shops/:username/company-info" 
               element={
@@ -125,6 +126,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <LoveFoodPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/recent-visits" 
+              element={
+                <PrivateRoute>
+                  <RecentShopsPage />
                 </PrivateRoute>
               } 
             />

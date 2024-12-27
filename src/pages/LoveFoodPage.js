@@ -121,9 +121,9 @@ const LoveFoodPage = () => {
               e.stopPropagation();
               setItemToUnfavorite(item);
             }}
-            className="absolute top-2 left-2 p-2 bg-black/20 rounded-full backdrop-blur-sm transition-all hover:scale-110"
+            className="absolute top-2 left-2 p-0 transition-all hover:scale-110"
           >
-            <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+            <Heart className="w-6 h-6 text-red-500 fill-red-500" />
           </button>
 
           {/* Shop Logo */}
@@ -166,9 +166,9 @@ const LoveFoodPage = () => {
     <div className="min-h-screen bg-white">
       {/* Custom Header */}
       <div className="sticky top-0 bg-white shadow-sm z-40">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
+        <div className="p-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => navigate(-1)}
                 className="p-2 hover:bg-gray-100 rounded-full"
@@ -179,21 +179,18 @@ const LoveFoodPage = () => {
                 <h1 className="text-xl font-bold">My Favorites</h1>
               </div>
             </div>
-            
-            {/* Shop Filter Dropdown - Only show if there are multiple shops */}
             {showShopFilter && (
               <div className="relative">
                 <button
                   onClick={() => setShowShopDropdown(!showShopDropdown)}
-                  className="px-4 py-2 bg-gray-100 rounded-full flex items-center gap-2 text-sm"
+                  className="px-4 py-2 rounded-full flex items-center gap-2 text-sm"
                 >
                   <span className="truncate max-w-[150px]">{selectedShop}</span>
                   <ChevronDown className="w-4 h-4 flex-shrink-0" />
                 </button>
-
                 {showShopDropdown && (
                   <>
-                    <div 
+                    <div
                       className="fixed inset-0 z-10"
                       onClick={() => setShowShopDropdown(false)}
                     />
@@ -222,9 +219,9 @@ const LoveFoodPage = () => {
       </div>
 
       {/* Gallery Grid */}
-      <div className="max-w-4xl mx-auto p-2">
+      <div className="p-2">
         {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
             {filteredItems.map(renderItem)}
           </div>
         ) : (
@@ -235,7 +232,7 @@ const LoveFoodPage = () => {
       </div>
 
       {/* Item Detail Popup */}
-      <PopupItem 
+      <PopupItem
         item={selectedItem}
         isOpen={!!selectedItem}
         onClose={() => setSelectedItem(null)}
@@ -243,8 +240,8 @@ const LoveFoodPage = () => {
       />
 
       {/* Unfavorite Confirmation Dialog */}
-      <AlertDialog 
-        open={!!itemToUnfavorite} 
+      <AlertDialog
+        open={!!itemToUnfavorite}
         onOpenChange={() => !isUnfavoriting && setItemToUnfavorite(null)}
       >
         <AlertDialogContent>

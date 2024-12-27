@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../ui/loading';
+import { trackShopVisit } from '../../firebase/utils';
 import Template1 from '../templates/Template1';
 import Template2 from '../templates/Template2';
 import Template3 from '../templates/Template3';
 import Header from '../Layout/Header';
-import SeoMeta from '../common/SeoMeta';  // 👈 Add this import
+import SeoMeta from '../common/SeoMeta';
 
 const MenuPreview = () => {
   const { username } = useParams();
   const location = useLocation();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [shop, setShop] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
@@ -38,6 +41,15 @@ const MenuPreview = () => {
         const shopDoc = shopSnapshot.docs[0];
         const shopData = { id: shopDoc.id, ...shopDoc.data() };
         setShop(shopData);
+
+        // Track shop visit if user is logged in
+        if (user) {
+          try {
+            await trackShopVisit(user.uid, shopData);
+          } catch (error) {
+            console.error('Error tracking shop visit:', error);
+          }
+        }
         
         if (shopData.defaultTemplate) {
           setSelectedTemplate(shopData.defaultTemplate);
@@ -61,7 +73,7 @@ const MenuPreview = () => {
     };
 
     loadShopAndMenu();
-  }, [username]);
+  }, [username, user]);
 
   if (loading) {
     return (
@@ -103,7 +115,7 @@ const MenuPreview = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SeoMeta shop={shop} />  {/* 👈 Add this line */}
+      <SeoMeta shop={shop} />
       <Header 
         shop={shop}
         onTemplateChange={setSelectedTemplate}

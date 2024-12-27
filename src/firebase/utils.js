@@ -7,7 +7,10 @@ import {
   getDocs,
   query,
   where,
-  getDoc
+  getDoc,
+  orderBy,
+  limit,
+  and
 } from 'firebase/firestore';
 
 import { 
@@ -82,6 +85,72 @@ export const checkIsFavorited = async (userId, itemId) => {
     return !querySnapshot.empty;
   } catch (error) {
     console.error('Error checking favorite status:', error);
+    throw error;
+  }
+};
+
+export const trackShopVisit = async (userId, shopData) => {
+  try {
+    // Check for existing visit first
+    const q = query(
+      collection(db, 'userVisits'),
+      where('userId', '==', userId),
+      where('shopId', '==', shopData.id)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // Update existing visit with new timestamp
+      const docRef = querySnapshot.docs[0].ref; // Fixed: Changed snapshot to querySnapshot
+      await updateDoc(docRef, { visitedAt: new Date() });
+      return docRef;
+    }
+
+    // Create new visit if doesn't exist
+    const visitRef = await addDoc(collection(db, 'userVisits'), {
+      userId,
+      shopId: shopData.id,
+      shopName: shopData.name,
+      shopUsername: shopData.username,
+      shopLogo: shopData.squareLogo,
+      visitedAt: new Date()
+    });
+    return visitRef;
+  } catch (error) {
+    console.error('Error tracking shop visit:', error);
+    throw error;
+  }
+};
+
+// Replace the existing getUserRecentVisits function with this:
+export const getUserRecentVisits = async (userId) => {
+  try {
+    // Get all visits for this user
+    const q = query(
+      collection(db, 'userVisits'),
+      where('userId', '==', userId),
+      orderBy('visitedAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+
+    // Use Map to keep only most recent visit per shop
+    const uniqueVisitsMap = new Map();
+    querySnapshot.docs.forEach(doc => {
+      const data = { id: doc.id, ...doc.data() };
+      if (!uniqueVisitsMap.has(data.shopId) || 
+          uniqueVisitsMap.get(data.shopId).visitedAt.seconds < data.visitedAt.seconds) {
+        uniqueVisitsMap.set(data.shopId, data);
+      }
+    });
+
+    // Convert to array, sort by visitedAt, and take only the 3 most recent
+    const recentVisits = Array.from(uniqueVisitsMap.values())
+      .sort((a, b) => b.visitedAt.seconds - a.visitedAt.seconds)
+      .slice(0, 3);
+
+    return recentVisits;
+  } catch (error) {
+    console.error('Error getting recent visits:', error);
     throw error;
   }
 };
@@ -222,102 +291,7 @@ export const deleteShop = async (shopId, squareLogoUrl, rectangleLogoUrl) => {
   }
 };
 
-// Menu Items Functions
-export const addMenuItem = async (shopId, itemData, imageFile) => {
-  try {
-    let imageUrl = null;
-    
-    // Upload image if exists
-    if (imageFile) {
-      const storageRef = ref(storage, `menu-items/${shopId}/${imageFile.name}`);
-      await uploadBytes(storageRef, imageFile);
-      imageUrl = await getDownloadURL(storageRef);
-    }
-
-    // Remove the File object before saving to Firestore
-    const { imageFile: _, ...cleanItemData } = itemData;
-
-    const menuItemData = {
-      ...cleanItemData,
-      shopId,
-      image: imageUrl,
-      createdAt: new Date(),
-    };
-
-    const docRef = await addDoc(collection(db, 'menuItems'), menuItemData);
-    return { id: docRef.id, ...menuItemData };
-  } catch (error) {
-    console.error('Error adding menu item:', error);
-    throw error;
-  }
-};
-
-export const updateMenuItem = async (itemId, itemData, imageFile) => {
-  try {
-    const itemRef = doc(db, 'menuItems', itemId);
-    let updatedData = { ...itemData };
-
-    // Handle image upload if new image is provided
-    if (imageFile) {
-      const storageRef = ref(storage, `menu-items/${itemData.shopId}/${imageFile.name}`);
-      await uploadBytes(storageRef, imageFile);
-      updatedData.image = await getDownloadURL(storageRef);
-
-      // Delete old image if exists
-      if (itemData.image) {
-        const oldImageRef = ref(storage, itemData.image);
-        try {
-          await deleteObject(oldImageRef);
-        } catch (error) {
-          console.warn('Old image not found:', error);
-        }
-      }
-    }
-
-    await updateDoc(itemRef, updatedData);
-    return { id: itemId, ...updatedData };
-  } catch (error) {
-    console.error('Error updating menu item:', error);
-    throw error;
-  }
-};
-
-export const deleteMenuItem = async (itemId, imageUrl) => {
-  try {
-    // Delete image from storage if exists
-    if (imageUrl) {
-      const imageRef = ref(storage, imageUrl);
-      try {
-        await deleteObject(imageRef);
-      } catch (error) {
-        console.warn('Image not found:', error);
-      }
-    }
-
-    // Delete document from Firestore
-    await deleteDoc(doc(db, 'menuItems', itemId));
-  } catch (error) {
-    console.error('Error deleting menu item:', error);
-    throw error;
-  }
-};
-
-export const getMenuItems = async (shopId) => {
-  try {
-    const q = query(collection(db, 'menuItems'), where('shopId', '==', shopId));
-    const querySnapshot = await getDocs(q);
-    const items = [];
-    querySnapshot.forEach((doc) => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-    return items;
-  } catch (error) {
-    console.error('Error getting menu items:', error);
-    throw error;
-  }
-};
-
-// Get shop by username
+// Shop Functions
 export const getShopByUsername = async (username) => {
   try {
     const q = query(collection(db, 'shops'), where('username', '==', username));
@@ -444,15 +418,78 @@ export const deleteStore = async (storeId, storeImage) => {
   }
 };
 
-// In utils.js, add this function
-export const updateShopHeaderStyle = async (shopId, isDarkHeader) => {
+// Menu Items Functions
+export const addMenuItem = async (shopId, itemData, imageFile) => {
   try {
-    const shopRef = doc(db, 'shops', shopId);
-    await updateDoc(shopRef, {
-      isDarkHeader: isDarkHeader
-    });
+    let imageUrl = null;
+    
+    // Upload image if exists
+    if (imageFile) {
+      const storageRef = ref(storage, `menu-items/${shopId}/${imageFile.name}`);
+      await uploadBytes(storageRef, imageFile);
+      imageUrl = await getDownloadURL(storageRef);
+    }
+
+    // Remove the File object before saving to Firestore
+    const { imageFile: _, ...cleanItemData } = itemData;
+
+    const menuItemData = {
+      ...cleanItemData,
+      shopId,
+      image: imageUrl,
+      createdAt: new Date(),
+    };
+
+    const docRef = await addDoc(collection(db, 'menuItems'), menuItemData);
+    return { id: docRef.id, ...menuItemData };
   } catch (error) {
-    console.error('Error updating shop header style:', error);
+    console.error('Error adding menu item:', error);
+    throw error;
+  }
+};
+
+export const updateMenuItem = async (itemId, itemData) => {
+  try {
+    const itemRef = doc(db, 'menuItems', itemId);
+    await updateDoc(itemRef, itemData);
+    return { id: itemId, ...itemData };
+  } catch (error) {
+    console.error('Error updating menu item:', error);
+    throw error;
+  }
+};
+
+export const deleteMenuItem = async (itemId, imageUrl) => {
+  try {
+    // Delete image from storage if exists
+    if (imageUrl) {
+      const imageRef = ref(storage, imageUrl);
+      try {
+        await deleteObject(imageRef);
+      } catch (error) {
+        console.warn('Image not found:', error);
+      }
+    }
+
+    // Delete document from Firestore
+    await deleteDoc(doc(db, 'menuItems', itemId));
+  } catch (error) {
+    console.error('Error deleting menu item:', error);
+    throw error;
+  }
+};
+
+export const getMenuItems = async (shopId) => {
+  try {
+    const q = query(collection(db, 'menuItems'), where('shopId', '==', shopId));
+    const querySnapshot = await getDocs(q);
+    const items = [];
+    querySnapshot.forEach((doc) => {
+      items.push({ id: doc.id, ...doc.data() });
+    });
+    return items;
+  } catch (error) {
+    console.error('Error getting menu items:', error);
     throw error;
   }
 };

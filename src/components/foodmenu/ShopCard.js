@@ -128,12 +128,15 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
               </div>
             )}
             <div>
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                {shop.name}
-                {shop.shopType === 'Food Court' && (
-                  <span className="text-sm text-gray-500">({storeCount})</span>
-                )}
-              </h2>
+  <h2 className="text-xl font-semibold flex items-center gap-2">
+    <div className="truncate max-w-[210px]" title={shop.name}>
+      {shop.name}
+    </div>
+    {shop.shopType === 'Food Court' && (
+      <span className="text-sm text-gray-500 whitespace-nowrap">({storeCount})</span>
+    )}
+  </h2>
+
               <div className="text-sm text-gray-500 mt-1">
                 <span>Type: {shop.shopType}</span>
                 

@@ -31,8 +31,15 @@ const ShopInfoMenu = ({
             }}
             user={user}
           />
-          <RecentShops />
-          <LoveFood showAllFavorites={true} /> {/* Show all favorites in user menu */}
+          <RecentShops />  {/* Recent Visits Section */}
+          {/* Only show Favorites in shop specific view */}
+          {!isHomePage && (
+            <LoveFood 
+              shopId={shop?.id} 
+              isSample={isHomePage}
+              showAllFavorites={false}
+            />
+          )}
         </>
       ) : (
         <NonLogin onSuccess={onClose} />
@@ -46,8 +53,8 @@ const ShopInfoMenu = ({
       <LoveFood 
         shopId={shop?.id} 
         isSample={isHomePage}
-        showAllFavorites={false} /* Show only shop favorites */
-      /> 
+        showAllFavorites={false}
+      />
     </div>
   );
 
