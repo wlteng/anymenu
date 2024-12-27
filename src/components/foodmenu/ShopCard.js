@@ -132,14 +132,17 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
     <div className="truncate max-w-[210px]" title={shop.name}>
       {shop.name}
     </div>
-    {shop.shopType === 'Food Court' && (
-      <span className="text-sm text-gray-500 whitespace-nowrap">({storeCount})</span>
-    )}
+    
   </h2>
 
               <div className="text-sm text-gray-500 mt-1">
-                <span>Type: {shop.shopType}</span>
-                
+                <span>
+                  Type: {shop.shopType}
+                  {shop.shopType === 'Food Court' && (
+                    <span className="ml-1">({storeCount})</span>
+                  )}
+                </span>
+
                 <div className="flex items-center gap-2 mt-2">
                   <button 
                     onClick={() => window.open(`/${shop.username}?darkHeader=${shop.isDarkHeader || false}`, '_blank')}
