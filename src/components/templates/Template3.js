@@ -8,7 +8,6 @@ const Template3 = ({ menuItems = [], shop = null }) => {
     setSelectedItem,
     filteredItems,
     renderPriceTag,
-    renderBadges,
     stores,
     StoreNavigation,
     CategoryNavigation
@@ -32,11 +31,6 @@ const Template3 = ({ menuItems = [], shop = null }) => {
             <span className="text-xs">{item.title}</span>
           </div>
         )}
-
-        {/* Badges */}
-        <div className="absolute top-2 left-2">
-          {renderBadges(item, 'small')}
-        </div>
 
         {/* Price Tag */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2">

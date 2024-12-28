@@ -16,6 +16,7 @@ import ShopForm from './pages/ShopForm';
 import Profile from './pages/Profile';
 import CompanyInfo from './components/foodmenu/CompanyInfo';
 import RecentShopsPage from './pages/RecentShopsPage';
+import MyRewardPage from './pages/MyRewardPage'; 
 
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -134,6 +135,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <RecentShopsPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/my-rewards" 
+              element={
+                <PrivateRoute>
+                  <MyRewardPage />
                 </PrivateRoute>
               } 
             />

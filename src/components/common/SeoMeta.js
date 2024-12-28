@@ -19,6 +19,14 @@ const SeoMeta = ({ shop }) => {
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
 
+      {/* PWA Smart Banner Meta Tags */}
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+      <meta name="apple-mobile-web-app-title" content={shop.name} />
+      <link rel="apple-touch-icon" href={shop.squareLogo} />
+      {/* Smart App Banner */}
+      <meta name="apple-itunes-app" content={`app-id=123456789, app-argument=${window.location.href}`} />
+
       {/* Open Graph / Facebook */}
       <meta property="og:type" content="website" />
       <meta property="og:title" content={ogTitle} />
@@ -31,6 +39,10 @@ const SeoMeta = ({ shop }) => {
       <meta name="twitter:title" content={ogTitle} />
       <meta name="twitter:description" content={ogDescription} />
       {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+      {/* PWA Theme Colors */}
+      <meta name="theme-color" content="#000000" />
+      <meta name="mobile-web-app-capable" content="yes" />
 
       {/* Social Media Links */}
       {shop.facebookUrl && <link rel="me" href={shop.facebookUrl} />}

@@ -18,41 +18,17 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle, isDarkHead
     return path === '/' || /^\/[^/]+$/.test(path);
   };
 
-  const getHeaderTitle = () => {
-    if (pageTitle) {
-      return pageTitle;
-    }
-
-    const path = location.pathname;
-    
-    if (path === '/my-shops') {
-      return 'My Shops';
-    }
-
-    if (path.startsWith('/menu/')) {
-      return 'Create Menu';
-    }
-    
-    if (shop?.useTextLogo) {
-      return shop.textLogo || shop.name;
-    }
-    
-    return null;
-  };
-
   const renderCenterContent = () => {
-    const title = getHeaderTitle();
-    const isSampleMenu = location.pathname === '/';
-    
-    if (title) {
+    if (pageTitle) {
       return (
         <span className={`text-xl font-bold ${isDarkHeader ? 'text-white' : 'text-gray-900'}`}>
-          {title}
+          {pageTitle}
         </span>
       );
     }
-    
-    if (isSampleMenu) {
+
+    // Home page
+    if (location.pathname === '/') {
       return (
         <img 
           src="/img/logo/logo.png"
@@ -61,22 +37,39 @@ const Header = ({ onTemplateChange, currentTemplate, shop, pageTitle, isDarkHead
         />
       );
     }
-    
-    if (shop?.rectangleLogo) {
+
+    // Shop page with logo configurations
+    if (shop) {
+      if (shop.useTextLogo && shop.textLogo) {
+        return (
+          <span className={`text-xl font-bold ${isDarkHeader ? 'text-white' : 'text-gray-900'}`}>
+            {shop.textLogo}
+          </span>
+        );
+      }
+      
+      if (shop.rectangleLogo) {
+        return (
+          <img 
+            src={shop.rectangleLogo} 
+            alt={shop.name}
+            className="h-8 w-auto cursor-pointer"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/img/logo/logo.png';
+            }}
+          />
+        );
+      }
+
       return (
-        <img 
-          src={shop.rectangleLogo} 
-          alt={shop.name}
-          className="h-8 w-auto cursor-pointer"
-        />
+        <span className={`text-xl font-bold ${isDarkHeader ? 'text-white' : 'text-gray-900'}`}>
+          {shop.name}
+        </span>
       );
     }
 
-    return (
-      <span className={`text-xl font-bold ${isDarkHeader ? 'text-white' : 'text-gray-900'}`}>
-        Sample Menu
-      </span>
-    );
+    return null;
   };
 
   return (

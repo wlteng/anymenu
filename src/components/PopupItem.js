@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star, Store } from 'lucide-react';
+import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star, Store, ExternalLink } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   const showItemCodes = shop?.showItemCodes ?? false;
 
@@ -69,7 +70,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
           description: 'Item removed from favorites'
         });
       } else {
-        // Create a clean version of the item without undefined values
         const cleanItem = {
           id: item.id,
           title: item.title,
@@ -87,7 +87,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
           storeId: item.storeId || null
         };
 
-        // Create a clean shop object
         const cleanShop = {
           id: shop.id,
           name: shop.name || '',
@@ -97,7 +96,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
           shopType: shop.shopType || ''
         };
 
-        // Add store information if it's a food court item
         if (shop.shopType === 'Food Court' && item.storeId) {
           const store = stores.find(s => s.id === item.storeId);
           if (store) {
@@ -110,7 +108,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
           }
         }
 
-        // Add to favorites with clean data
         await addFavoriteItem(user.uid, {
           ...cleanItem,
           shopId: shop.id,
@@ -135,25 +132,51 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
     }
   };
 
-  const handleShare = async (e) => {
+  const handleShare = (platform) => async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (isSharing) return;
 
     setIsSharing(true);
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: item.title,
-          text: item.description,
-          url: window.location.href
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        showToast({
-          title: 'Success',
-          description: 'Link copied to clipboard'
-        });
+      const shareUrl = window.location.href;
+      const shareText = `Check out ${item.title} at ${shop.name}!`;
+      
+      let shareLink = '';
+      
+      switch (platform) {
+        case 'whatsapp':
+          shareLink = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+          break;
+        case 'facebook':
+          shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'twitter':
+          shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'telegram':
+          shareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+          break;
+        case 'copy':
+          await navigator.clipboard.writeText(shareUrl);
+          showToast({
+            title: 'Success',
+            description: 'Link copied to clipboard'
+          });
+          setShowShareMenu(false);
+          return;
+        default:
+          if (navigator.share) {
+            await navigator.share({
+              title: item.title,
+              text: shareText,
+              url: shareUrl
+            });
+          }
+      }
+
+      if (shareLink) {
+        window.open(shareLink, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -165,7 +188,12 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
       }
     } finally {
       setIsSharing(false);
+      setShowShareMenu(false);
     }
+  };
+
+  const handleVisitShop = () => {
+    window.open(`/${shop.username}`, '_blank');
   };
 
   if (!item) return null;
@@ -199,7 +227,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0" onClick={(e) => e.stopPropagation()}>
         <div className="relative">
-          {/* Image Section */}
           <div className="relative h-[300px]">
             {item.image ? (
               <img 
@@ -213,7 +240,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
               </div>
             )}
             
-            {/* Show Item Code if enabled */}
             {showItemCodes && item.itemCode && (
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-medium text-gray-700 shadow-sm">
                 {item.itemCode}
@@ -222,7 +248,6 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
             
             {/* Top Actions */}
             <div className="absolute top-4 left-4 flex gap-4">
-              {/* Only show heart icon if user is logged in */}
               {user && (
                 <button 
                   onClick={handleLikeToggle}
@@ -240,17 +265,62 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
                   )}
                 </button>
               )}
-              <button 
-                onClick={handleShare}
-                disabled={isSharing}
-                className="p-2 bg-black/20 rounded-full backdrop-blur-sm transition-transform hover:scale-110 disabled:opacity-50"
-              >
-                {isSharing ? (
-                  <LoadingSpinner className="w-6 h-6 text-white" />
-                ) : (
-                  <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
+              <div className="relative">
+                <button 
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                  disabled={isSharing}
+                  className="p-2 bg-black/20 rounded-full backdrop-blur-sm transition-transform hover:scale-110 disabled:opacity-50"
+                >
+                  {isSharing ? (
+                    <LoadingSpinner className="w-6 h-6 text-white" />
+                  ) : (
+                    <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
+                  )}
+                </button>
+
+                {showShareMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-50"
+                      onClick={() => setShowShareMenu(false)}
+                    />
+                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1">
+                        <button
+                          onClick={handleShare('whatsapp')}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Share on WhatsApp
+                        </button>
+                        <button
+                          onClick={handleShare('facebook')}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Share on Facebook
+                        </button>
+                        <button
+                          onClick={handleShare('twitter')}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Share on Twitter
+                        </button>
+                        <button
+                          onClick={handleShare('telegram')}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Share on Telegram
+                        </button>
+                        <button
+                          onClick={handleShare('copy')}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Copy Link
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
-              </button>
+              </div>
             </div>
 
             {/* Price Tag */}
@@ -307,6 +377,17 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
 
             {/* Footer Information */}
             {renderFooterInfo()}
+
+            {/* Visit Shop Button (shown when viewing from favorites) */}
+            {window.location.pathname === '/love-food' && (
+              <button
+                onClick={handleVisitShop}
+                className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700 transition-colors"
+              >
+                <ExternalLink className="w-5 h-5" />
+                <span>Visit {shop.name}</span>
+              </button>
+            )}
           </div>
         </div>
       </DialogContent>

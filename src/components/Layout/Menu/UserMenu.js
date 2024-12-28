@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store, ChevronRight, LogOut, UserCircle } from 'lucide-react';
+import { Store, ChevronRight, LogOut, UserCircle, Heart, Clock, Ticket } from 'lucide-react';
 import { signInWithGoogle, signOutUser } from '../../../firebase/auth';
 import { useToast } from '../../../contexts/ToastContext';
 import { LoadingSpinner } from '../../../components/ui/loading';
@@ -91,6 +91,21 @@ const UserMenu = ({ onNavigate, user }) => {
       icon: UserCircle,
       label: 'Profile',
       onClick: () => onNavigate('/profile')
+    },
+    {
+      icon: Heart,
+      label: 'Favorite Foods',
+      onClick: () => onNavigate('/love-food')
+    },
+    {
+      icon: Clock,
+      label: 'Recent Visits',
+      onClick: () => onNavigate('/recent-visits')
+    },
+    {
+      icon: Ticket,
+      label: 'My Rewards',
+      onClick: () => onNavigate('/my-rewards')
     },
     {
       icon: LogOut,
