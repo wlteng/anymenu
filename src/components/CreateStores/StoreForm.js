@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '../../ui/dialog';
-import { LoadingSpinner } from '../../ui/loading';
-import { useToast } from '../../../contexts/ToastContext';
+import { Dialog, DialogContent, DialogTitle } from '../ui/dialog';
+import { LoadingSpinner } from '../ui/loading';
+import { useToast } from '../../contexts/ToastContext';
 import { Upload, X } from 'lucide-react';
-import { createStore, updateStore } from '../../../firebase/utils';
+import { createStore, updateStore } from '../../firebase/utils';
 
 const defaultFormData = {
   name: '',

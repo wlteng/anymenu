@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useToast } from '../../../contexts/ToastContext';
-import { LoadingSpinner } from '../../ui/loading';
-import Header from '../../Layout/Header';
-import { 
-  getShopByUsername, 
-  deleteStore, 
-  getStores 
-} from '../../../firebase/utils';
+import { useToast } from '../../contexts/ToastContext';
+import { LoadingSpinner } from '../ui/loading';
+import Header from '../Layout/Header';
+import { getShopByUsername, deleteStore, getStores } from '../../firebase/utils';
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 import { Plus, ArrowLeft, Edit2, Trash2 } from 'lucide-react';
-import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../ui/alert';
+
 import StoreForm from './StoreForm';
 
 const StoreList = () => {

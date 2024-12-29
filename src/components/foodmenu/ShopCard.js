@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon, Info } from 'lucide-react';
+import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon, Info, Gift } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 import { LoadingSpinner } from '../ui/loading';
 import { deleteDoc, query, collection, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useToast } from '../../contexts/ToastContext';
-import CompanyInfo from './CompanyInfo';
+import CompanyInfo from '../CompanyInfo';
 import { useNavigate } from 'react-router-dom';
 
 const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleChange }) => {
@@ -157,7 +157,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
                     onClick={() => onCreateMenu(shop.username)}
                     className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100"
                   >
-                    Create Menu
+                  Create Menu
                   </button>
                 </div>
               </div>
@@ -207,7 +207,18 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
                     <PlusCircle size={16} className="mr-2" />
                     Manage Stores
                   </button>
+
                 )}
+                <button
+                  onClick={() => {
+                    navigate(`/my-shops/${shop.username}/rewards`);
+                    setShowDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                >
+                  <Gift size={16} className="mr-2" />
+                  Manage Reward
+                </button>
 
                 <button
                   onClick={handleHeaderStyleToggle}
@@ -238,6 +249,7 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
                   <Trash2 size={16} className="mr-2" />
                   Delete
                 </button>
+
               </div>
             )}
           </div>

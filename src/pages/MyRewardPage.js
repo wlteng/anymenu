@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import MyReward from '../components/MyReward';
+
 import Menu from '../components/Layout/Menu';
 import RewardInfo from '../components/MyReward/components/RewardInfo';
+import MyReward from '../components/MyReward'; // Ensure the correct path
 
 const MyRewardPage = () => {
   const navigate = useNavigate();

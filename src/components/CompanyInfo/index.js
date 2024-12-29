@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { LoadingSpinner } from '../../ui/loading';
-import { useToast } from '../../../contexts/ToastContext';
+import { LoadingSpinner } from '../ui/loading';
+import { useToast } from '../../contexts/ToastContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../../../firebase/config';
-import { getShopByUsername } from '../../../firebase/utils';
-import Header from '../../Layout/Header';
+import { db, storage } from '../../firebase/config';
+import { getShopByUsername } from '../../firebase/utils';
+import Header from '../Layout/Header';
 
 // Import sections
 import BasicSection from './BasicSection';

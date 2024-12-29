@@ -13,6 +13,7 @@ import {
   and
 } from 'firebase/firestore';
 
+// Storage imports
 import { 
   ref,
   uploadBytes,
@@ -20,8 +21,11 @@ import {
   deleteObject
 } from 'firebase/storage';
 
+// Config imports
 import { db, storage } from './config';
 
+// Re-export needed firestore functions
+export { deleteDoc, doc } from 'firebase/firestore';
 // Add favorite item
 export const addFavoriteItem = async (userId, itemData) => {
   try {
