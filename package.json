@@ -8,6 +8,7 @@
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.2",
+    "@yudiel/react-qr-scanner": "^2.1.0",
     "cra-template": "1.2.0",
     "firebase": "^11.0.2",
     "lucide-react": "^0.468.0",
