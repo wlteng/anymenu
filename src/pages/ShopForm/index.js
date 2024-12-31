@@ -5,6 +5,7 @@ import { getShopByUsername, updateShop } from '../../firebase/utils';
 import { usernameUtils } from '../../firebase/username-utils';
 import { useToast } from '../../contexts/ToastContext';
 import Form from './Form';
+import { currencyList } from '../../data/general';
 
 const ShopForm = () => {
   const { username } = useParams();
@@ -15,7 +16,7 @@ const ShopForm = () => {
     id: '',
     name: '',
     username: '',
-    shopType: 'Restaurant', // Add default shop type
+    shopType: 'Restaurant',
     textLogo: '',
     useTextLogo: false,
     squareLogoFile: null,
@@ -24,6 +25,7 @@ const ShopForm = () => {
     rectangleLogoPreview: null,
     defaultTemplate: 'template1',
     currencyCode: 'IDR',
+    currencySymbol: 'Rp',
     language: 'id',
     country: 'Indonesia',
     categories: [],
@@ -60,11 +62,14 @@ const ShopForm = () => {
         return;
       }
 
+      // Find the currency from currencyList to get the symbol and other details
+      const currency = currencyList.find(c => c.code === (shopData.currencyCode || 'IDR'));
+
       setFormData({
         ...formData,
         ...shopData,
         id: shopData.id,
-        shopType: shopData.shopType || 'Restaurant', // Load shop type with default
+        shopType: shopData.shopType || 'Restaurant',
         textLogo: shopData.textLogo || '',
         useTextLogo: Boolean(shopData.useTextLogo),
         squareLogoPreview: shopData.squareLogo || null,
@@ -75,8 +80,9 @@ const ShopForm = () => {
         showItemCodes: Boolean(shopData.showItemCodes),
         defaultTemplate: shopData.defaultTemplate || 'template1',
         currencyCode: shopData.currencyCode || 'IDR',
-        language: shopData.language || 'id',
-        country: shopData.country || 'Indonesia'
+        currencySymbol: currency?.symbol || 'Rp',
+        language: currency?.language || 'id',
+        country: currency?.country || 'Indonesia'
       });
 
       setUsernameStatus({
@@ -168,16 +174,20 @@ const ShopForm = () => {
         throw new Error('Shop ID is missing');
       }
 
+      // Get the selected currency details
+      const selectedCurrency = currencyList.find(c => c.code === formData.currencyCode);
+
       const cleanData = {
         name: formData.name,
         username: formData.username,
-        shopType: formData.shopType || 'Restaurant', // Include shop type in save data
+        shopType: formData.shopType || 'Restaurant',
         textLogo: formData.textLogo || '',
         useTextLogo: Boolean(formData.useTextLogo),
         defaultTemplate: formData.defaultTemplate || 'template1',
         currencyCode: formData.currencyCode || 'IDR',
-        language: formData.language || 'id',
-        country: formData.country || 'Indonesia',
+        currencySymbol: selectedCurrency?.symbol || 'Rp',
+        language: selectedCurrency?.language || 'id',
+        country: selectedCurrency?.country || 'Indonesia',
         categories: formData.categories || [],
         showItemCodes: Boolean(formData.showItemCodes)
       };

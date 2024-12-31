@@ -12,9 +12,12 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     renderItemCode,
     renderItemFooter,
     renderBadges,
+    renderPriceTag,
     StoreNavigation,
     CategoryNavigation
   } = useTemplateLogic({ menuItems, shop });
+
+  const currencySymbol = shop?.currencySymbol || '$';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,21 +54,8 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                     {renderBadges(item, 'normal')}
                   </div>
 
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 md:hidden">
-                    {item.promotionalPrice ? (
-                      <>
-                        <div className="bg-white rounded-full px-3 py-1 text-sm font-semibold text-gray-500 line-through shadow-md">
-                          ${item.price}
-                        </div>
-                        <div className="bg-green-500 text-white rounded-full px-3 py-1 text-sm font-semibold shadow-md">
-                          ${item.promotionalPrice}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="bg-white rounded-full px-3 py-1 text-sm font-semibold shadow-md">
-                        ${item.price}
-                      </div>
-                    )}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 md:hidden">
+                    {renderPriceTag(item, 'normal')}
                   </div>
                 </div>
 
@@ -91,15 +81,15 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                       {item.promotionalPrice ? (
                         <>
                           <div className="text-gray-300 line-through">
-                            ${item.price}
+                            {currencySymbol}{item.price}
                           </div>
                           <div className="bg-green-500 text-white px-4 py-2 rounded-tl-lg rounded-br-lg ml-2">
-                            ${item.promotionalPrice}
+                            {currencySymbol}{item.promotionalPrice}
                           </div>
                         </>
                       ) : (
                         <div className="bg-blue-50 text-gray-400 px-4 py-2 rounded-tl-lg rounded-br-lg">
-                          ${item.price}
+                          {currencySymbol}{item.price}
                         </div>
                       )}
                     </div>

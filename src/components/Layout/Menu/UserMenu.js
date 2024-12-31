@@ -92,16 +92,7 @@ const UserMenu = ({ onNavigate, user }) => {
       label: 'Profile',
       onClick: () => onNavigate('/profile')
     },
-    {
-      icon: Heart,
-      label: 'Favorite Foods',
-      onClick: () => onNavigate('/love-food')
-    },
-    {
-      icon: Clock,
-      label: 'Recent Visits',
-      onClick: () => onNavigate('/recent-visits')
-    },
+    
     {
       icon: Ticket,
       label: 'My Rewards',

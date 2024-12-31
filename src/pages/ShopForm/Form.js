@@ -35,6 +35,19 @@ const Form = ({
     handleSave(e, updatedData);
   };
 
+  const handleCountryChange = (selectedCurrencyCode) => {
+    const selectedCurrency = currencyList.find(c => c.code === selectedCurrencyCode);
+    if (selectedCurrency) {
+      setFormData(prev => ({
+        ...prev,
+        currencyCode: selectedCurrency.code,
+        currencySymbol: selectedCurrency.symbol,
+        language: selectedCurrency.language,
+        country: selectedCurrency.country
+      }));
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* App Logo (Square) */}
@@ -162,15 +175,7 @@ const Form = ({
           <div className="relative">
             <select
               value={formData.currencyCode}
-              onChange={(e) => {
-                const selectedCurrency = currencyList.find(c => c.code === e.target.value);
-                setFormData(prev => ({
-                  ...prev,
-                  currencyCode: selectedCurrency.code,
-                  language: selectedCurrency.language,
-                  country: selectedCurrency.country
-                }));
-              }}
+              onChange={(e) => handleCountryChange(e.target.value)}
               className="w-full h-12 px-4 pr-10 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none"
             >
               {currencyList.map((currency) => (

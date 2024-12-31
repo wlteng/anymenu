@@ -34,7 +34,6 @@ const Template2 = ({ menuItems = [], shop = null }) => {
           </div>
         )}
         
-        {/* Item Code */}
         {renderItemCode(item.itemCode)}
 
         {/* Price Tag */}

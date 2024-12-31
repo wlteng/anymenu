@@ -2,136 +2,254 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { db } from '../../firebase/config';
-import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs, getDoc } from 'firebase/firestore';
 import { LoadingSpinner } from '../ui/loading';
-import { AlertDialog, AlertDialogContent, AlertDialogTitle } from '../ui/alert';
-import { CheckCircle2, XCircle, ArrowLeft, Camera, RefreshCcw } from 'lucide-react';
-import Header from '../Layout/Header';
+import { useToast } from '../../contexts/ToastContext';
+import { getAuth } from 'firebase/auth';
 import { getShopByUsername } from '../../firebase/utils';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
 const RewardScanner = () => {
-  const { username } = useParams();
+  const { username, rewardId } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [shop, setShop] = useState(null);
+  const [reward, setReward] = useState(null);
+  const [email, setEmail] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [processing, setProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [scannerKey, setScannerKey] = useState(0); // For forcing scanner reload
-  const [isCameraPermissionChecking, setIsCameraPermissionChecking] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const auth = getAuth();
 
   useEffect(() => {
-    loadShop();
-    checkCameraPermission();
-  }, [username]);
-
-  const checkCameraPermission = async () => {
-    setIsCameraPermissionChecking(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
-      
-      // Stop the stream immediately after checking
-      stream.getTracks().forEach(track => track.stop());
-      
-      setError(null);
-    } catch (err) {
-      console.error('Camera permission error:', err);
-      let errorMessage = 'Error accessing camera. ';
-      
-      if (err.name === 'NotAllowedError') {
-        errorMessage += 'Camera access was denied. Please allow camera access in your browser settings.';
-      } else if (err.name === 'NotFoundError') {
-        errorMessage += 'No camera found on this device.';
-      } else if (err.name === 'NotReadableError') {
-        errorMessage += 'Camera may be in use by another application.';
-      } else {
-        errorMessage += 'Please check camera permissions and try again.';
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setIsCameraPermissionChecking(false);
+    if (username && rewardId) {
+      loadShopAndReward();
     }
-  };
+  }, [username, rewardId]);
 
-  const loadShop = async () => {
+  const loadShopAndReward = async () => {
     try {
+      // Load shop data
       const shopData = await getShopByUsername(username);
       if (!shopData) {
-        navigate('/my-shops');
-        return;
+        throw new Error('Shop not found');
       }
       setShop(shopData);
-    } catch (error) {
-      console.error('Error loading shop:', error);
+
+      // Load reward data
+      const rewardDoc = await getDoc(doc(db, 'rewards', rewardId));
+      if (!rewardDoc.exists()) {
+        throw new Error('Reward not found');
+      }
+      
+      const rewardData = rewardDoc.data();
+      if (!rewardData.isActive) {
+        throw new Error('This reward program is currently inactive');
+      }
+      
+      setReward(rewardData);
+      
+    } catch (err) {
+      console.error('Error loading data:', err);
+      showToast({
+        title: 'Error',
+        description: err.message || 'Failed to load shop data',
+        type: 'error'
+      });
+      navigate(`/my-shops/${username}/rewards`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleScan = async (data) => {
-    if (!data || processing) return;
-    
-    setProcessing(true);
+  const checkUserExists = async (email) => {
     try {
-      const qrData = JSON.parse(data);
-      console.log('Scanned QR data:', qrData); // Debug log
-      
-      const { userId, timestamp } = qrData;
-
-      if (!userId || !timestamp) {
-        throw new Error('Invalid QR code format');
-      }
-
-      const now = Date.now();
-      const validityPeriod = 2 * 60 * 1000; // 2 minutes
-      if (now - timestamp > validityPeriod) {
-        setError('QR code has expired. Please ask customer to refresh their code.');
-        return;
-      }
-
-      const stampRef = doc(collection(db, 'stamps'));
-      await setDoc(stampRef, {
-        userId,
-        shopId: shop.id,
-        shopName: shop.name,
-        timestamp: serverTimestamp(),
-      });
-
-      setSuccess('Stamp added successfully!');
+      const usersQuery = query(
+        collection(db, 'users'),
+        where('email', '==', email)
+      );
+      const userSnapshot = await getDocs(usersQuery);
+      return !userSnapshot.empty;
     } catch (error) {
-      console.error('Error processing QR:', error);
-      setError(error.message || 'Failed to process QR code. Try again.');
-    } finally {
-      setProcessing(false);
+      console.error('Error checking user:', error);
+      return false;
     }
   };
 
-  const handleError = (error) => {
-    console.error('Scanner error:', error);
-    setError('Error with scanner: ' + error.message);
+  const checkExistingStamps = async (email) => {
+    const existingStampsQuery = query(
+      collection(db, 'stamps'),
+      where('email', '==', email),
+      where('shopId', '==', shop.id),
+      where('rewardId', '==', rewardId),
+      where('status', '==', 'active')
+    );
+    
+    const stampsSnapshot = await getDocs(existingStampsQuery);
+    return stampsSnapshot.docs.length; // Returns number of existing stamps
   };
 
-  const resetScanner = () => {
+  const generateUniqueStampId = (email) => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    return `${email.replace(/[.@]/g, '_')}_${timestamp}_${random}`;
+  };
+
+  const validateEarningCriteria = async (email) => {
+    if (!reward.howToEarn) return true;
+
+    if (reward.howToEarn.minimumSpend) {
+      // Here you would implement the check for minimum spend
+      // This might involve checking recent transactions or requiring manual verification
+      const minAmount = parseFloat(reward.howToEarn.minimumAmount);
+      if (isNaN(minAmount)) {
+        throw new Error('Invalid minimum spend amount configured');
+      }
+      // For now, we'll assume the minimum spend is met
+      // You might want to add UI for staff to verify/input actual spend amount
+    }
+
+    if (reward.howToEarn.googleReview) {
+      // Here you would implement Google review verification
+      // This might require manual verification by staff
+      // You might want to add UI for staff to confirm review
+    }
+
+    if (reward.howToEarn.socialMediaFollow) {
+      // Here you would implement social media follow verification
+      // This might require manual verification by staff
+      // You might want to add UI for staff to confirm follow
+    }
+
+    return true;
+  };
+
+  const addStamp = async (email) => {
+    if (!email) {
+      setError('Email is required.');
+      return;
+    }
+
+    if (!shop || !rewardId) {
+      setError('Shop or reward information is missing.');
+      return;
+    }
+
+    setIsProcessing(true);
     setError(null);
     setSuccess(null);
-    setProcessing(false);
-    setScannerKey(prev => prev + 1); // Force scanner reload
+
+    try {
+      // Check if user exists
+      const userExists = await checkUserExists(email);
+      if (!userExists) {
+        throw new Error('User not found. Customer needs to register first.');
+      }
+
+      // Validate earning criteria
+      await validateEarningCriteria(email);
+      
+      // Check existing stamps count
+      const existingStampsCount = await checkExistingStamps(email);
+      
+      if (existingStampsCount >= reward.stampsRequired) {
+        throw new Error('This reward card is already full! The customer should redeem their reward.');
+      }
+
+      // Generate a unique stamp ID
+      const stampId = generateUniqueStampId(email);
+      
+      // Check for recent stamps to prevent duplicates
+      const recentStampsQuery = query(
+        collection(db, 'stamps'),
+        where('email', '==', email),
+        where('shopId', '==', shop.id),
+        where('rewardId', '==', rewardId),
+        where('timestamp', '>', new Date(Date.now() - 60000)) // Last minute
+      );
+      
+      const recentStamps = await getDocs(recentStampsQuery);
+      if (!recentStamps.empty) {
+        throw new Error('A stamp was already added for this customer recently');
+      }
+
+      // Calculate expiry date based on reward settings
+      const expiryDate = reward.isLifetimeReward ? 
+        new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)) : // 100 years for lifetime
+        new Date(Date.now() + (reward.expiryDays * 24 * 60 * 60 * 1000));
+
+      // Prepare stamp data
+      const stampData = {
+        email,
+        shopId: shop.id,
+        shopName: shop.name,
+        shopUsername: shop.username,
+        rewardId,
+        userId: auth.currentUser.uid,
+        timestamp: serverTimestamp(),
+        createdBy: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+        status: 'active',
+        type: 'regular',
+        expiryDate
+      };
+
+      // Add the stamp to Firestore
+      await setDoc(doc(db, 'stamps', stampId), stampData);
+
+      const remainingStamps = reward.stampsRequired - (existingStampsCount + 1);
+      const successMessage = remainingStamps > 0 
+        ? `Stamp added! ${remainingStamps} more stamp${remainingStamps !== 1 ? 's' : ''} needed for reward.`
+        : 'Stamp added! Reward card is now complete!';
+
+      setSuccess(successMessage);
+      showToast({
+        title: 'Success',
+        description: successMessage,
+        type: 'success'
+      });
+      
+      setEmail('');
+    } catch (err) {
+      console.error('Error adding stamp:', err);
+      setError(err.message || 'Failed to add stamp.');
+      showToast({
+        title: 'Error',
+        description: err.message || 'Failed to add stamp',
+        type: 'error'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const retryCamera = async () => {
-    setError(null);
-    await checkCameraPermission();
-    resetScanner();
+  const handleScan = async (result) => {
+    if (!result?.text) return;
+
+    try {
+      const qrData = JSON.parse(result.text);
+      const { email: scannedEmail } = qrData;
+
+      if (!scannedEmail) throw new Error('Invalid QR code format. Missing email.');
+      await addStamp(scannedEmail);
+    } catch (err) {
+      console.error('Error processing QR:', err);
+      setError(err.message || 'Failed to process QR code.');
+      showToast({
+        title: 'Error',
+        description: 'Invalid QR code',
+        type: 'error'
+      });
+    }
   };
 
-  if (isLoading || isCameraPermissionChecking) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addStamp(email);
+  };
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="w-8 h-8" />
@@ -140,80 +258,86 @@ const RewardScanner = () => {
   }
 
   return (
-    <>
-      <Header shop={shop} pageTitle="Scan QR Code" />
-      <div className="max-w-md mx-auto p-6">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate(`/my-shops/${username}/rewards`)}
-            className="text-gray-600 hover:bg-gray-100 py-2 rounded-lg flex items-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-        </div>
+    <div className="max-w-md mx-auto p-6">
+      {/* Back Button */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(`/my-shops/${username}/rewards`)}
+          className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Rewards
+        </button>
+      </div>
 
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="mb-4 text-center">
-            <h2 className="text-lg font-semibold">Scan Customer QR Code</h2>
-            <p className="text-sm text-gray-500">Position the QR code within the frame</p>
-          </div>
+      <h2 className="text-lg font-semibold mb-4">Award Stamps</h2>
 
-          {error ? (
-            <div className="p-4 bg-red-50 rounded-lg text-center">
-              <Camera className="w-8 h-8 text-red-500 mx-auto mb-2" />
-              <p className="text-red-700 mb-2">{error}</p>
-              <button
-                onClick={retryCamera}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg"
-              >
-                <RefreshCcw className="w-4 h-4" />
-                Retry Camera
-              </button>
-            </div>
-          ) : (
-            <div className="relative aspect-square overflow-hidden rounded-lg">
-              <Scanner
-                key={scannerKey}
-                onResult={handleScan}
-                onError={handleError}
-                constraints={{
-                  facingMode: 'environment',
-                  aspectRatio: 1
-                }}
-                className="w-full h-full"
-              />
-              {processing && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <LoadingSpinner className="text-white w-8 h-8" />
-                </div>
-              )}
+      {/* Reward Info */}
+      {reward && (
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <h3 className="font-medium">{reward.name}</h3>
+          {reward.howToEarn && (
+            <div className="mt-2 text-sm text-gray-600">
+              <p className="font-medium">Requirements:</p>
+              <ul className="mt-1 space-y-1">
+                {reward.howToEarn.minimumSpend && (
+                  <li>• Minimum spend: {reward.howToEarn.minimumAmount}</li>
+                )}
+                {reward.howToEarn.googleReview && (
+                  <li>• Must leave a Google review</li>
+                )}
+                {reward.howToEarn.socialMediaFollow && (
+                  <li>• Must follow on social media</li>
+                )}
+              </ul>
             </div>
           )}
         </div>
+      )}
+      
+      {/* Status Messages */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 rounded-lg flex items-center gap-2 text-red-600">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 rounded-lg text-green-600">
+          {success}
+        </div>
+      )}
 
-        {/* Success Dialog */}
-        {success && (
-          <AlertDialog open={true} onOpenChange={resetScanner}>
-            <AlertDialogContent>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span>Success</span>
-              </AlertDialogTitle>
-              <div className="text-green-600">
-                {success}
-              </div>
-              <button
-                onClick={resetScanner}
-                className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg"
-              >
-                Scan Another Code
-              </button>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </div>
-    </>
+      {/* Email Input */}
+      <form onSubmit={handleSubmit} className="mb-6">
+        <div className="flex gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter customer email"
+            className="flex-1 p-2 border rounded-lg"
+            required
+            disabled={isProcessing}
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+            disabled={isProcessing}
+          >
+            {isProcessing && <LoadingSpinner size="w-4 h-4" />}
+            Submit
+          </button>
+        </div>
+      </form>
+
+      {/* QR Scanner */}
+      <Scanner
+        onResult={handleScan}
+        constraints={{ facingMode: 'environment' }}
+        className="w-full h-64 rounded-lg border"
+      />
+    </div>
   );
 };
 

@@ -3,7 +3,6 @@ import { Store, Tag, Clock, ChefHat, Flame, Star } from 'lucide-react';
 import { getStores } from '../../firebase/utils';
 import { foodSpecialties } from '../../data/general';
 
-// Map icons to their Lucide components
 const SPECIALTY_ICONS = {
   chefRecommended: ChefHat,
   spicy: Flame,
@@ -16,7 +15,6 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
   const [selectedStore, setSelectedStore] = useState('All');
   const [stores, setStores] = useState([]);
 
-  // Load stores if shop type is Food Court
   useEffect(() => {
     const loadStores = async () => {
       if (shop?.shopType === 'Food Court') {
@@ -32,15 +30,14 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
   }, [shop]);
 
   const showItemCodes = shop?.showItemCodes ?? false;
+  const currencySymbol = shop?.currencySymbol || '$';
 
-  // Get store name helper
   const getStoreName = (item) => {
     if (!stores.length || !item.storeId) return null;
     const store = stores.find(s => s.id === item.storeId);
     return store?.name;
   };
 
-  // Filter items by both category and store
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
       const matchesCategory = 
@@ -58,7 +55,6 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     });
   }, [menuItems, selectedCategory, selectedStore]);
 
-  // Shared rendering functions
   const renderItemCode = (itemCode) => {
     if (!showItemCodes || !itemCode) return null;
 
@@ -115,11 +111,11 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     return item.promotionalPrice ? (
       <div className={`bg-green-50 rounded-full ${classes.base} font-semibold text-green-600 shadow-md flex items-center gap-1`}>
         <Tag className={classes.icon} />
-        ${item.promotionalPrice}
+        {currencySymbol}{item.promotionalPrice}
       </div>
     ) : (
       <div className={`bg-white rounded-full ${classes.base} font-semibold shadow-md`}>
-        ${item.price}
+        {currencySymbol}{item.price}
       </div>
     );
   };
@@ -151,7 +147,6 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     );
   };
 
-  // Navigation Components
   const StoreNavigation = () => {
     if (shop?.shopType !== 'Food Court' || stores.length === 0) return null;
 
@@ -268,7 +263,6 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
   };
 
   return {
-    // State
     selectedCategory,
     selectedItem,
     setSelectedItem,
@@ -276,17 +270,11 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     stores,
     showItemCodes,
     filteredItems,
-
-    // Helper functions
     getStoreName,
-
-    // Rendering functions
     renderItemCode,
     renderItemFooter,
     renderPriceTag,
     renderBadges,
-
-    // Navigation components
     StoreNavigation,
     CategoryNavigation
   };

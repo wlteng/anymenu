@@ -24,6 +24,8 @@ import ShopRewardPage from './pages/ShopRewardPage';
 import RewardScanner from './components/ShopReward/RewardScanner';
 import CustomerList from './components/ShopReward/CustomerList';
 import CreateReward from './components/ShopReward/CreateReward';
+import ShopGivenHistory from './components/ShopReward/ShopGivenHistory';
+
 
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -55,13 +57,15 @@ function App() {
             <Route path="/menu/:username/:category/add" element={<PrivateRoute><ShopMenuCreateForm /></PrivateRoute>} />
             <Route path="/menu/:username/:category/:itemId" element={<PrivateRoute><ShopMenuCreateForm /></PrivateRoute>} />
 
-            {/* Reward Management */}
+          
             
+            {/* Reward Management */}
             <Route path="/my-shops/:username/rewards" element={<PrivateRoute><ShopRewardPage /></PrivateRoute>} />
             <Route path="/my-shops/:username/rewards/create" element={<PrivateRoute><CreateReward /></PrivateRoute>} />
             <Route path="/my-shops/:username/rewards/edit/:rewardId" element={<PrivateRoute><CreateReward /></PrivateRoute>} />
-            <Route path="/my-shops/:username/rewards/scan" element={<PrivateRoute><RewardScanner /></PrivateRoute>} />
+            <Route path="/my-shops/:username/rewards/:rewardId/scan" element={<PrivateRoute><RewardScanner /></PrivateRoute>} />
             <Route path="/my-shops/:username/rewards/:rewardId/customers" element={<PrivateRoute><CustomerList /></PrivateRoute>} />
+            <Route path="/my-shops/:username/claims" element={<PrivateRoute><ShopGivenHistory /></PrivateRoute>} />
 
             {/* User Features */}
             <Route path="/love-food" element={<PrivateRoute><LoveFoodPage /></PrivateRoute>} />
