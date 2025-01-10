@@ -147,6 +147,12 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     );
   };
 
+  const NavigationContainer = ({ children }) => (
+    <div className="sticky top-0 bg-white shadow-sm z-20">
+      {children}
+    </div>
+  );
+
   const StoreNavigation = () => {
     if (shop?.shopType !== 'Food Court' || stores.length === 0) return null;
 
@@ -275,6 +281,7 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     renderItemFooter,
     renderPriceTag,
     renderBadges,
+    NavigationContainer,
     StoreNavigation,
     CategoryNavigation
   };

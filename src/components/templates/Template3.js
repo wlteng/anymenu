@@ -10,6 +10,7 @@ const Template3 = ({ menuItems = [], shop = null }) => {
     renderPriceTag,
     stores,
     StoreNavigation,
+    NavigationContainer,
     CategoryNavigation
   } = useTemplateLogic({ menuItems, shop });
 
@@ -43,10 +44,10 @@ const Template3 = ({ menuItems = [], shop = null }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <div className="sticky top-0 bg-white shadow-sm z-15">
-        <StoreNavigation />
-        <CategoryNavigation />
-      </div>
+      <NavigationContainer>
+            <StoreNavigation />
+            <CategoryNavigation />
+          </NavigationContainer>
 
       {/* Gallery Grid */}
       <div className="p-2">
