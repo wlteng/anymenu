@@ -205,41 +205,74 @@ export const getShopById = async (shopId) => {
 };
 
 // Update shop
+// Update shop
 export const updateShop = async (shopId, shopData) => {
   try {
+    console.log('Starting updateShop with:', { shopId, shopData });
+    
     const shopRef = doc(db, 'shops', shopId);
     let updatedData = { ...shopData };
 
     // Handle square logo upload if provided
     if (shopData.squareLogoFile) {
-      const storageRef = ref(storage, `shops/${shopId}/square-logo`);
+      console.log('Uploading square logo:', {
+        fileName: shopData.squareLogoFile.name,
+        fileSize: shopData.squareLogoFile.size,
+        fileType: shopData.squareLogoFile.type
+      });
+
+      const timestamp = Date.now();
+      const squareFileName = `square-logo-${timestamp}`;
+      const storageRef = ref(storage, `shops/${shopId}/${squareFileName}`);
+      console.log('Square logo storage path:', `shops/${shopId}/${squareFileName}`);
+      
       await uploadBytes(storageRef, shopData.squareLogoFile);
-      updatedData.squareLogo = await getDownloadURL(storageRef);
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log('Square logo download URL:', downloadURL);
+      
+      updatedData.squareLogo = downloadURL;
 
       // Delete old square logo if exists
       if (shopData.previousSquareLogo) {
-        const oldLogoRef = ref(storage, shopData.previousSquareLogo);
+        console.log('Attempting to delete old square logo:', shopData.previousSquareLogo);
         try {
+          const oldLogoRef = ref(storage, shopData.previousSquareLogo);
           await deleteObject(oldLogoRef);
+          console.log('Successfully deleted old square logo');
         } catch (error) {
-          console.warn('Old square logo not found:', error);
+          console.warn('Error deleting old square logo:', error);
         }
       }
     }
 
     // Handle rectangle logo upload if provided
     if (shopData.rectangleLogoFile) {
-      const storageRef = ref(storage, `shops/${shopId}/rectangle-logo`);
+      console.log('Uploading rectangle logo:', {
+        fileName: shopData.rectangleLogoFile.name,
+        fileSize: shopData.rectangleLogoFile.size,
+        fileType: shopData.rectangleLogoFile.type
+      });
+
+      const timestamp = Date.now();
+      const rectangleFileName = `rectangle-logo-${timestamp}`;
+      const storageRef = ref(storage, `shops/${shopId}/${rectangleFileName}`);
+      console.log('Rectangle logo storage path:', `shops/${shopId}/${rectangleFileName}`);
+      
       await uploadBytes(storageRef, shopData.rectangleLogoFile);
-      updatedData.rectangleLogo = await getDownloadURL(storageRef);
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log('Rectangle logo download URL:', downloadURL);
+      
+      updatedData.rectangleLogo = downloadURL;
 
       // Delete old rectangle logo if exists
       if (shopData.previousRectangleLogo) {
-        const oldLogoRef = ref(storage, shopData.previousRectangleLogo);
+        console.log('Attempting to delete old rectangle logo:', shopData.previousRectangleLogo);
         try {
+          const oldLogoRef = ref(storage, shopData.previousRectangleLogo);
           await deleteObject(oldLogoRef);
+          console.log('Successfully deleted old rectangle logo');
         } catch (error) {
-          console.warn('Old rectangle logo not found:', error);
+          console.warn('Error deleting old rectangle logo:', error);
         }
       }
     }
@@ -250,13 +283,14 @@ export const updateShop = async (shopId, shopData) => {
     delete updatedData.previousSquareLogo;
     delete updatedData.previousRectangleLogo;
 
+    console.log('Final updatedData before saving:', updatedData);
     await updateDoc(shopRef, updatedData);
     return { id: shopId, ...updatedData };
   } catch (error) {
-    console.error('Error updating shop:', error);
+    console.error('Error in updateShop:', error);
     throw error;
   }
-};
+}
 
 // Delete shop
 export const deleteShop = async (shopId, squareLogoUrl, rectangleLogoUrl) => {
