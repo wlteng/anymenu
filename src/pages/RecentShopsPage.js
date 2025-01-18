@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/ui/loading';
-import { getUserRecentVisits, getFavoriteItems } from '../firebase/utils';
+import { getUserRecentVisits, getFavoriteItems, getShopById } from '../firebase/utils';
 import Menu from '../components/Layout/Menu';
 
 // Helper function to format relative time
@@ -59,14 +59,23 @@ const RecentShopsPage = () => {
     try {
       const visits = await getUserRecentVisits(user.uid, LIMIT);
       
-      // Use Map to ensure uniqueness by shopId
+      // Use Map to ensure uniqueness by shopId and get latest visit
       const uniqueVisitsMap = new Map();
-      visits.forEach(visit => {
+      for (const visit of visits) {
         if (!uniqueVisitsMap.has(visit.shopId) || 
             uniqueVisitsMap.get(visit.shopId).visitedAt.seconds < visit.visitedAt.seconds) {
-          uniqueVisitsMap.set(visit.shopId, visit);
+          // Get fresh shop data to ensure latest logo
+          const shopData = await getShopById(visit.shopId);
+          if (shopData) {
+            uniqueVisitsMap.set(visit.shopId, {
+              ...visit,
+              shopLogo: shopData.squareLogo, // Use latest logo from shop data
+              shopName: shopData.name,       // Use latest name from shop data
+              shopUsername: shopData.username // Use latest username from shop data
+            });
+          }
         }
-      });
+      }
 
       const uniqueVisits = Array.from(uniqueVisitsMap.values())
         .sort((a, b) => b.visitedAt.seconds - a.visitedAt.seconds);

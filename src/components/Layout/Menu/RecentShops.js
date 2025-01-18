@@ -3,7 +3,7 @@ import { Clock, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { LoadingSpinner } from '../../../components/ui/loading';
-import { getUserRecentVisits } from '../../../firebase/utils';
+import { getUserRecentVisits, getShopById } from '../../../firebase/utils';
 
 const RecentShops = () => {
   const { user } = useAuth();
@@ -19,14 +19,23 @@ const RecentShops = () => {
       try {
         const visits = await getUserRecentVisits(user.uid);
         
-        // Use Map to keep only most recent visit per shop
+        // Use Map to ensure uniqueness by shopId and get latest visit
         const uniqueVisitsMap = new Map();
-        visits.forEach(visit => {
+        for (const visit of visits) {
           if (!uniqueVisitsMap.has(visit.shopId) || 
               uniqueVisitsMap.get(visit.shopId).visitedAt.seconds < visit.visitedAt.seconds) {
-            uniqueVisitsMap.set(visit.shopId, visit);
+            // Get fresh shop data to ensure latest logo and info
+            const shopData = await getShopById(visit.shopId);
+            if (shopData) {
+              uniqueVisitsMap.set(visit.shopId, {
+                ...visit,
+                shopLogo: shopData.squareLogo, // Use latest logo from shop data
+                shopName: shopData.name,       // Use latest name from shop data
+                shopUsername: shopData.username // Use latest username from shop data
+              });
+            }
           }
-        });
+        }
 
         const uniqueVisits = Array.from(uniqueVisitsMap.values())
           .sort((a, b) => b.visitedAt.seconds - a.visitedAt.seconds)
@@ -52,6 +61,24 @@ const RecentShops = () => {
   }
 
   if (recentVisits.length === 0) return null;
+
+  const formatVisitTime = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 24) {
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `Today at ${hours}:${minutes}`;
+    } else if (diffInHours < 48) {
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `Yesterday at ${hours}:${minutes}`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   return (
     <div className="p-4 border-b">
@@ -96,7 +123,7 @@ const RecentShops = () => {
               </div>
               {visit.visitedAt && (
                 <div className="text-xs text-gray-400">
-                  {new Date(visit.visitedAt.seconds * 1000).toLocaleString()}
+                  {formatVisitTime(visit.visitedAt.seconds)}
                 </div>
               )}
             </div>
