@@ -1,4 +1,3 @@
-// Template1.js
 import React, { useEffect } from 'react';
 import PopupItem from '../PopupItem';
 import useTemplateLogic from './TemplateCore';
@@ -20,7 +19,7 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     selectedVariant,
     StoreNavigation,
     CategoryNavigation,
-    getSelectedVariantPrice  // Added this
+    getSelectedVariantPrice
   } = useTemplateLogic({ menuItems, shop });
 
   const currencySymbol = shop?.currencySymbol || '$';
@@ -58,18 +57,26 @@ const Template1 = ({ menuItems = [], shop = null }) => {
             >
               <div className="flex flex-col md:flex-row">
                 <div className="relative w-full md:w-48 h-48">
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 rounded-t-xl md:rounded-l-xl md:rounded-tr-none flex items-center justify-center">
-                      <span className="text-gray-400">{item.title}</span>
-                    </div>
-                  )}
-                  
+                  <div className="w-full h-full">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover rounded-t-xl md:rounded-l-xl md:rounded-tr-none"
+                        onError={(e) => {
+                          // Hide broken image and show text instead
+                          e.target.style.display = 'none';
+                          e.target.parentElement.className = "w-full h-full bg-gray-100 flex items-center justify-center rounded-t-xl md:rounded-l-xl md:rounded-tr-none";
+                          e.target.parentElement.innerHTML = `<span class="text-gray-400">${item.title}</span>`;
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
+                        <span className="text-gray-400">{item.title}</span>
+                      </div>
+                    )}
+                  </div>
+
                   {renderItemCode(item.itemCode)}
                   
                   <div className="absolute top-2 left-2 md:hidden">
@@ -90,7 +97,6 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                       <div className="md:hidden mt-2">
                         <div className="flex items-center gap-3">
                           {renderItemFooter(item)}
-                          {/* Use variant badges instead of dropdown for mobile */}
                           {renderVariantBadges(item, (itemId, variantId) => {
                             setSelectedVariant(prev => ({ ...prev, [itemId]: variantId }));
                           })}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import MenuLayout from './MenuLayout';
@@ -8,6 +8,7 @@ import NonLogin from './NonLogin';
 import LoveFood from './LoveFood';
 import UserMenu from './UserMenu';
 import RecentShops from './RecentShops';
+import { getUserRecentVisits, getShopById } from '../../../firebase/utils';
 
 const ShopInfoMenu = ({ 
   isOpen, 
@@ -19,6 +20,36 @@ const ShopInfoMenu = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [lastVisitedShop, setLastVisitedShop] = useState(null);
+
+  useEffect(() => {
+    const loadLastVisitedShop = async () => {
+      if (!user) return;
+      
+      try {
+        const visits = await getUserRecentVisits(user.uid);
+        if (visits && visits.length > 0) {
+          // Get the most recent visit
+          const latestVisit = visits.reduce((latest, current) => {
+            return latest.visitedAt.seconds > current.visitedAt.seconds ? latest : current;
+          });
+          
+          // Get fresh shop data
+          const shopData = await getShopById(latestVisit.shopId);
+          if (shopData) {
+            setLastVisitedShop({
+              ...shopData,
+              visitedAt: latestVisit.visitedAt
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading last visited shop:', error);
+      }
+    };
+
+    loadLastVisitedShop();
+  }, [user]);
 
   const renderUserContent = () => (
     <div className="flex-1 overflow-auto">
@@ -31,8 +62,7 @@ const ShopInfoMenu = ({
             }}
             user={user}
           />
-          <RecentShops />  {/* Recent Visits Section */}
-          {/* Only show Favorites in shop specific view */}
+          <RecentShops />
           {!isHomePage && (
             <LoveFood 
               shopId={shop?.id} 
@@ -49,9 +79,9 @@ const ShopInfoMenu = ({
 
   const renderShopContent = () => (
     <div className="flex-1 overflow-auto">
-      <ShopInfo shop={shop} isSample={isHomePage} />
+      <ShopInfo shop={lastVisitedShop || shop} isSample={isHomePage} />
       <LoveFood 
-        shopId={shop?.id} 
+        shopId={lastVisitedShop?.id || shop?.id} 
         isSample={isHomePage}
         showAllFavorites={false}
       />
@@ -61,11 +91,17 @@ const ShopInfoMenu = ({
   const header = (
     <MenuHeader
       onClose={onClose}
-      shop={shop}
+      shop={lastVisitedShop || shop}
       user={user}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
       isHomePage={isHomePage}
+      onShopClick={() => {
+        if (lastVisitedShop?.username) {
+          window.location.href = `/${lastVisitedShop.username}`;
+          onClose();
+        }
+      }}
     />
   );
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, User } from 'lucide-react';
 
-const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab, isHomePage }) => {
+const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab, isHomePage, onShopClick }) => {
   const TabButton = ({ type, isActive, onClick }) => (
     <button
       onClick={onClick}
@@ -10,14 +10,7 @@ const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab, isHomePage }
       }`}
     >
       {type === 'shop' ? (
-        isHomePage ? (
-          // Show app logo for homepage
-          <img 
-            src="/img/logo/applogo.png"
-            alt="Sample Restaurant"
-            className="w-7 h-7 object-cover rounded"
-          />
-        ) : shop?.squareLogo ? (
+        shop?.squareLogo ? (
           <img 
             src={shop.squareLogo}
             alt={shop.name}
@@ -57,7 +50,13 @@ const MenuHeader = ({ onClose, shop, user, activeTab, setActiveTab, isHomePage }
           <TabButton 
             type="shop"
             isActive={activeTab === 'shop'}
-            onClick={() => setActiveTab('shop')}
+            onClick={() => {
+              if (shop) {
+                onShopClick();
+              } else {
+                setActiveTab('shop');
+              }
+            }}
           />
           <TabButton 
             type="user"
