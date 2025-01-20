@@ -73,25 +73,6 @@ const ShopMenuCreateForm = () => {
       setIsLoading(false);
     }
   };
-  const renderSpecialtyTag = (specialty) => {
-    const Icon = Icons[specialty.icon];
-    const isActive = formData[specialty.property];
-
-    return (
-      <label key={specialty.id} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer">
-        <input
-          type="checkbox"
-          checked={isActive}
-          onChange={(e) => setFormData(prev => ({ ...prev, [specialty.property]: e.target.checked }))}
-          className="hidden"
-        />
-        <div className={`p-2 rounded-full ${isActive ? specialty.bgColor : 'bg-gray-100'}`}>
-          <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
-        </div>
-        <span className="text-sm">{specialty.label}</span>
-      </label>
-    );
-  };
 
   const loadExistingItemCodes = async () => {
     try {
@@ -138,9 +119,8 @@ const ShopMenuCreateForm = () => {
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+  const processFile = (file) => {
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({
@@ -153,11 +133,47 @@ const ShopMenuCreateForm = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    processFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    processFile(file);
+  };
+
+  const renderSpecialtyTag = (specialty) => {
+    const Icon = Icons[specialty.icon];
+    const isActive = formData[specialty.property];
+
+    return (
+      <label key={specialty.id} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+        <input
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setFormData(prev => ({ ...prev, [specialty.property]: e.target.checked }))}
+          className="hidden"
+        />
+        <div className={`p-2 rounded-full ${isActive ? specialty.bgColor : 'bg-gray-100'}`}>
+          <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+        </div>
+        <span className="text-sm">{specialty.label}</span>
+      </label>
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!shop) return;
 
-    // Validate item code if provided
     if (formData.itemCode && !validateItemCode(formData.itemCode)) {
       setItemCodeError('This item code is already in use');
       return;
@@ -175,6 +191,11 @@ const ShopMenuCreateForm = () => {
       // Add storeId for food court shops
       if (shop.shopType === 'Food Court' && storeId) {
         submissionData.storeId = storeId;
+      }
+
+      // Keep existing image if no new image is uploaded during edit
+      if (!formData.imageFile && isEditMode) {
+        submissionData.image = formData.imagePreview;
       }
 
       if (isEditMode) {
@@ -234,7 +255,7 @@ const ShopMenuCreateForm = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
+          {/* Image Upload with Drag & Drop */}
           <div className="flex justify-center">
             {formData.imagePreview ? (
               <div className="relative">
@@ -256,18 +277,29 @@ const ShopMenuCreateForm = () => {
                 </button>
               </div>
             ) : (
-              <label className="cursor-pointer hover:bg-gray-50 border-2 border-dashed rounded-lg flex items-center justify-center w-[200px] h-[200px]">
-                <div className="text-center">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                  <span className="text-sm text-gray-500 mt-2 block">Upload Image</span>
-                  <input
-                    type="file"
-                    onChange={handleImageChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </div>
-              </label>
+              <div
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className="relative cursor-pointer group"
+              >
+                <label className="cursor-pointer hover:bg-gray-50 border-2 border-dashed rounded-lg flex flex-col items-center justify-center w-[200px] h-[200px] transition-colors group-hover:border-blue-500">
+                  <div className="text-center p-4">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-blue-500" />
+                    <span className="text-sm text-gray-500 group-hover:text-blue-500">
+                      Drag & drop image here
+                    </span>
+                    <span className="text-xs text-gray-400 block mt-1">
+                      or click to browse
+                    </span>
+                    <input
+                      type="file"
+                      onChange={handleImageChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </div>
+                </label>
+              </div>
             )}
           </div>
 

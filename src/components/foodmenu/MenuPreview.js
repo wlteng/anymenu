@@ -19,10 +19,11 @@ const MenuPreview = () => {
   const [loading, setLoading] = useState(true);
   const [shop, setShop] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
+  const [orderedCategories, setOrderedCategories] = useState([]);
+  const [orderedItems, setOrderedItems] = useState({});
   const [error, setError] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('template1');
   
-  // Get isDarkHeader from URL parameters
   const searchParams = new URLSearchParams(location.search);
   const isDarkHeader = searchParams.get('darkHeader') === 'true';
 
@@ -43,6 +44,9 @@ const MenuPreview = () => {
         const shopData = { id: shopDoc.id, ...shopDoc.data() };
         setShop(shopData);
 
+        // Set ordered categories from shop data
+        setOrderedCategories(shopData.categoryOrder || shopData.categories);
+
         // Track shop visit if user is logged in
         if (user) {
           try {
@@ -56,6 +60,7 @@ const MenuPreview = () => {
           setSelectedTemplate(shopData.defaultTemplate);
         }
 
+        // Load menu items
         const menuItemsRef = collection(db, 'menuItems');
         const menuQuery = query(menuItemsRef, where('shopId', '==', shopDoc.id));
         const menuSnapshot = await getDocs(menuQuery);
@@ -64,7 +69,36 @@ const MenuPreview = () => {
           id: doc.id,
           ...doc.data()
         }));
+
+        // Order the items according to saved order
+        const orderedMenuItems = {};
+        if (shopData.itemOrder) {
+          // Use saved item order
+          shopData.categories.forEach(category => {
+            const categoryOrder = shopData.itemOrder[category] || [];
+            const orderedCategoryItems = [
+              // First add items that are in the order
+              ...categoryOrder
+                .map(id => items.find(item => item.id === id))
+                .filter(item => item), // Remove any null items
+              // Then add any items that aren't in the order
+              ...items.filter(item => 
+                item.category === category && 
+                !categoryOrder.includes(item.id)
+              )
+            ];
+            orderedMenuItems[category] = orderedCategoryItems;
+          });
+        } else {
+          // Default ordering by category
+          shopData.categories.forEach(category => {
+            orderedMenuItems[category] = items.filter(item => item.category === category);
+          });
+        }
+
+        setOrderedItems(orderedMenuItems);
         setMenuItems(items);
+
       } catch (error) {
         console.error('Error loading menu:', error);
         setError('Failed to load menu');
@@ -101,6 +135,8 @@ const MenuPreview = () => {
     const props = { 
       menuItems,
       shop,
+      orderedItems,
+      orderedCategories,
       isPreview: true
     };
 

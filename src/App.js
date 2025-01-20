@@ -4,12 +4,12 @@ import { ToastContextProvider } from './contexts/ToastContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Page & Component Imports
-
 import ShopMenu from './components/ShopMenu';
 import MenuPreview from './components/foodmenu/MenuPreview';
 import ShopManager from './components/foodmenu/ShopManager';
 import ShopMenuCreator from './components/foodmenu/ShopMenuCreator';
 import ShopMenuCreateForm from './components/foodmenu/ShopMenuCreateForm';
+import ShopCategoriesManager from './components/foodmenu/ShopCategoriesManager';
 import CreateStores from './components/CreateStores';
 import StoreSelector from './components/foodmenu/StoreSelector';
 import LoveFoodPage from './pages/LoveFoodPage';
@@ -26,7 +26,6 @@ import CustomerList from './components/ShopReward/CustomerList';
 import CreateReward from './components/ShopReward/CreateReward';
 import ShopGivenHistory from './components/ShopReward/ShopGivenHistory';
 
-
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
@@ -40,7 +39,8 @@ function App() {
         <Router>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<ShopMenu />} /> <Route path="/:username" element={<MenuPreview />} />
+            <Route path="/" element={<ShopMenu />} />
+            <Route path="/:username" element={<MenuPreview />} />
 
             {/* Profile */}
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
@@ -50,14 +50,13 @@ function App() {
             <Route path="/my-shops/:username/edit" element={<PrivateRoute><ShopForm /></PrivateRoute>} />
             <Route path="/my-shops/:username/company-info" element={<PrivateRoute><CompanyInfo /></PrivateRoute>} />
             <Route path="/my-shops/:username/stores" element={<PrivateRoute><CreateStores /></PrivateRoute>} />
+            <Route path="/my-shops/:username/categories" element={<PrivateRoute><ShopCategoriesManager /></PrivateRoute>} />
 
             {/* Menu Management */}
             <Route path="/menu/:username/store-select" element={<PrivateRoute><StoreSelector /></PrivateRoute>} />
             <Route path="/menu/:username" element={<PrivateRoute><ShopMenuCreator /></PrivateRoute>} />
             <Route path="/menu/:username/:category/add" element={<PrivateRoute><ShopMenuCreateForm /></PrivateRoute>} />
             <Route path="/menu/:username/:category/:itemId" element={<PrivateRoute><ShopMenuCreateForm /></PrivateRoute>} />
-
-          
             
             {/* Reward Management */}
             <Route path="/my-shops/:username/rewards" element={<PrivateRoute><ShopRewardPage /></PrivateRoute>} />

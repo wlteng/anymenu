@@ -486,16 +486,50 @@ export const addMenuItem = async (shopId, itemData, imageFile) => {
   }
 };
 
-export const updateMenuItem = async (itemId, itemData) => {
+export const updateMenuItem = async (itemId, itemData, imageFile) => {
   try {
     const itemRef = doc(db, 'menuItems', itemId);
-    await updateDoc(itemRef, itemData);
-    return { id: itemId, ...itemData };
+    let updatedData = { ...itemData };
+
+    // Handle image upload if new image is provided
+    if (imageFile) {
+      const timestamp = Date.now();
+      const originalName = imageFile.name;
+      const extension = originalName.split('.').pop();
+      const uniqueFileName = `menu_${timestamp}.${extension}`;
+      
+      const storageRef = ref(storage, `menu-items/${itemData.shopId}/${uniqueFileName}`);
+      await uploadBytes(storageRef, imageFile);
+      updatedData.image = await getDownloadURL(storageRef);
+
+      // Delete old image if it's a valid storage URL
+      if (itemData.image && itemData.image.startsWith('https://firebasestorage.googleapis.com')) {
+        try {
+          const oldImageRef = ref(storage, itemData.image);
+          await deleteObject(oldImageRef);
+        } catch (error) {
+          console.warn('Error deleting old image:', error);
+        }
+      }
+    } else {
+      // If no new image, keep the existing image URL
+      if (itemData.image && !itemData.image.startsWith('data:')) {
+        updatedData.image = itemData.image;
+      }
+    }
+
+    // Remove unnecessary fields before saving to Firestore
+    delete updatedData.imageFile;
+    delete updatedData.imagePreview;
+
+    // Update Firestore document
+    await updateDoc(itemRef, updatedData);
+    return { id: itemId, ...updatedData };
   } catch (error) {
     console.error('Error updating menu item:', error);
     throw error;
   }
-};
+}
 
 export const deleteMenuItem = async (itemId, imageUrl) => {
   try {

@@ -52,7 +52,7 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                   {renderItemCode(item.itemCode)}
                   
                   <div className="absolute top-2 left-2 md:hidden">
-                    {renderBadges(item, 'normal')}
+                    {renderBadges(item, 'large')}
                   </div>
 
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 md:hidden">
@@ -73,7 +73,7 @@ const Template1 = ({ menuItems = [], shop = null }) => {
 
                     <div className="hidden md:flex flex-col gap-3 mt-auto">
                       <div className="flex items-center gap-2">
-                        {renderBadges(item, 'normal')}
+                        {renderBadges(item, 'large')}
                       </div>
                       {renderItemFooter(item)}
                     </div>

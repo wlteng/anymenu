@@ -9,11 +9,14 @@ const SPECIALTY_ICONS = {
   popular: Star
 };
 
-export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
+export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategories = null, orderedItems = null }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedStore, setSelectedStore] = useState('All');
   const [stores, setStores] = useState([]);
+
+  // Use ordered categories if provided, otherwise fall back to shop categories
+  const categories = orderedCategories || shop?.categories || [];
 
   useEffect(() => {
     const loadStores = async () => {
@@ -38,22 +41,43 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     return store?.name;
   };
 
+  const getOrderedItemsByCategory = (category) => {
+    if (!orderedItems || !orderedItems[category]) {
+      // Fall back to unordered filtering if no order is specified
+      return menuItems.filter(item => item.category === category);
+    }
+    return orderedItems[category];
+  };
+
   const filteredItems = useMemo(() => {
-    return menuItems.filter(item => {
-      const matchesCategory = 
-        selectedCategory === 'All' ||
+    let items = [];
+
+    if (selectedCategory === 'All') {
+      // If using ordered categories, maintain category order for 'All' view
+      if (orderedCategories && orderedItems) {
+        orderedCategories.forEach(category => {
+          items = [...items, ...getOrderedItemsByCategory(category)];
+        });
+      } else {
+        items = menuItems;
+      }
+    } else if (foodSpecialties.some(specialty => selectedCategory === specialty.id)) {
+      // For specialty filters, order doesn't matter
+      items = menuItems.filter(item => 
         foodSpecialties.some(specialty => 
           selectedCategory === specialty.id && item[specialty.property]
-        ) ||
-        item.category === selectedCategory;
+        )
+      );
+    } else {
+      // For specific category, use ordered items if available
+      items = getOrderedItemsByCategory(selectedCategory);
+    }
 
-      const matchesStore = 
-        selectedStore === 'All' ||
-        item.storeId === selectedStore;
-
-      return matchesCategory && matchesStore;
-    });
-  }, [menuItems, selectedCategory, selectedStore]);
+    // Apply store filter if needed
+    return items.filter(item => 
+      selectedStore === 'All' || item.storeId === selectedStore
+    );
+  }, [menuItems, selectedCategory, selectedStore, orderedItems, orderedCategories]);
 
   const renderItemCode = (itemCode) => {
     if (!showItemCodes || !itemCode) return null;
@@ -121,32 +145,34 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
   };
 
   const renderBadges = (item, size = 'normal') => {
-    const sizeClasses = {
-      small: 'w-3 h-3 p-0.5',
-      normal: 'w-4 h-4 p-1',
-      large: 'w-5 h-5 p-1.5'
+      const sizeClasses = {
+        small: 'w-3 h-3',        // Matching ShopMenuCreator size
+        normal: 'w-3 h-3',       // Matching ShopMenuCreator size
+        large: 'w-5 h-5'        // Slightly larger for special cases
+      };
+
+      const badgeSize = sizeClasses[size] || sizeClasses.normal;
+
+      return (
+        <div className="flex gap-1">
+          {foodSpecialties.map(specialty => {
+            const Icon = SPECIALTY_ICONS[specialty.id];
+            const isActive = item[specialty.property];
+            
+            if (!isActive) return null;
+            
+            return (
+              <div 
+                key={specialty.id} 
+                className={`${specialty.bgColor} p-1 rounded-full shadow-sm`}
+              >
+                <Icon className={`${badgeSize} text-white`} />
+              </div>
+            );
+          })}
+        </div>
+      );
     };
-
-    const badgeSize = sizeClasses[size] || sizeClasses.normal;
-
-    return (
-      <div className="flex gap-1">
-        {foodSpecialties.map(specialty => {
-          const Icon = SPECIALTY_ICONS[specialty.id];
-          const isActive = item[specialty.property];
-          
-          if (!isActive) return null;
-          
-          return (
-            <div key={specialty.id} className={`${specialty.bgColor} rounded-full shadow-md`}>
-              <Icon className={`${badgeSize} text-white`} />
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   const NavigationContainer = ({ children }) => (
     <div className="sticky top-0 bg-white shadow-sm z-20">
       {children}
@@ -210,9 +236,9 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
   };
 
   const CategoryNavigation = () => {
-    const categories = [
+    const allCategories = [
       'All',
-      ...(shop?.categories || []),
+      ...categories,
       ...foodSpecialties.map(specialty => ({
         id: specialty.id,
         icon: React.createElement(SPECIALTY_ICONS[specialty.id], { className: "w-4 h-4" }),
@@ -238,7 +264,7 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     return (
       <div className="overflow-x-auto">
         <div className="flex space-x-4 px-4 py-2">
-          {categories.map((category) => {
+          {allCategories.map((category) => {
             const isString = typeof category === 'string';
             const categoryId = isString ? category : category.id;
             
@@ -276,6 +302,7 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     stores,
     showItemCodes,
     filteredItems,
+    categories: orderedCategories || categories,
     getStoreName,
     renderItemCode,
     renderItemFooter,
@@ -283,6 +310,7 @@ export const useTemplateLogic = ({ menuItems = [], shop = null }) => {
     renderBadges,
     NavigationContainer,
     StoreNavigation,
-    CategoryNavigation
+    CategoryNavigation,
+    getOrderedItemsByCategory
   };
 };

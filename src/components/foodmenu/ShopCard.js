@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon, Info, Gift } from 'lucide-react';
+import { Eye, Edit2, Trash2, MoreVertical, PlusCircle, Sun, Moon, Info, Gift, TagIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../ui/alert';
 import { LoadingSpinner } from '../ui/loading';
 import { deleteDoc, query, collection, where, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -235,6 +235,16 @@ const ShopCard = ({ shop, onView, onEdit, onCreateMenu, onDelete, onHeaderStyleC
                       Dark Header
                     </>
                   )}
+                </button>
+                <button
+                  onClick={() => {
+                    navigate(`/my-shops/${shop.username}/categories`);
+                    setShowDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                >
+                  <TagIcon size={16} className="mr-2" />
+                  Manage Categories
                 </button>
 
                 <div className="h-px bg-gray-200 my-1" />
