@@ -1,21 +1,23 @@
+// TemplateCore.js
 import React, { useState, useEffect, useMemo } from 'react';
-import { Store, Tag, Clock, ChefHat, Flame, Star } from 'lucide-react';
+import { Store, Tag, Clock, ChefHat, Flame, Star, AlertCircle } from 'lucide-react';
 import { getStores } from '../../firebase/utils';
 import { foodSpecialties } from '../../data/general';
 
 const SPECIALTY_ICONS = {
-  chefRecommended: ChefHat,
-  spicy: Flame,
-  popular: Star
+  ChefHat: ChefHat,
+  Flame: Flame,
+  Star: Star,
+  AlertCircle: AlertCircle
 };
 
-export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategories = null, orderedItems = null }) => {
+const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategories = null, orderedItems = null }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedStore, setSelectedStore] = useState('All');
+  const [selectedVariant, setSelectedVariant] = useState({});
   const [stores, setStores] = useState([]);
 
-  // Use ordered categories if provided, otherwise fall back to shop categories
   const categories = orderedCategories || shop?.categories || [];
 
   useEffect(() => {
@@ -33,7 +35,19 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
   }, [shop]);
 
   const showItemCodes = shop?.showItemCodes ?? false;
-  const currencySymbol = shop?.currencySymbol || '$';
+
+  const formatPrice = (price) => {
+    if (!price) return '';
+    const symbol = shop?.currencySymbol || '$';
+    
+    if (shop?.currencyCode === 'IDR') {
+      return `${symbol}${parseInt(price).toLocaleString('id-ID')}`;
+    }
+    return `${symbol}${parseFloat(price).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
   const getStoreName = (item) => {
     if (!stores.length || !item.storeId) return null;
@@ -43,17 +57,27 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
 
   const getOrderedItemsByCategory = (category) => {
     if (!orderedItems || !orderedItems[category]) {
-      // Fall back to unordered filtering if no order is specified
       return menuItems.filter(item => item.category === category);
     }
     return orderedItems[category];
+  };
+
+  const getSelectedVariantPrice = (item) => {
+    if (!selectedVariant[item.id] || !item.variants) return item;
+    const selectedVariantData = item.variants.find(v => v.id === selectedVariant[item.id]);
+    if (!selectedVariantData) return item;
+    
+    return {
+      ...item,
+      price: selectedVariantData.price,
+      promotionalPrice: selectedVariantData.promotionalPrice
+    };
   };
 
   const filteredItems = useMemo(() => {
     let items = [];
 
     if (selectedCategory === 'All') {
-      // If using ordered categories, maintain category order for 'All' view
       if (orderedCategories && orderedItems) {
         orderedCategories.forEach(category => {
           items = [...items, ...getOrderedItemsByCategory(category)];
@@ -62,18 +86,15 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
         items = menuItems;
       }
     } else if (foodSpecialties.some(specialty => selectedCategory === specialty.id)) {
-      // For specialty filters, order doesn't matter
       items = menuItems.filter(item => 
         foodSpecialties.some(specialty => 
           selectedCategory === specialty.id && item[specialty.property]
         )
       );
     } else {
-      // For specific category, use ordered items if available
       items = getOrderedItemsByCategory(selectedCategory);
     }
 
-    // Apply store filter if needed
     return items.filter(item => 
       selectedStore === 'All' || item.storeId === selectedStore
     );
@@ -115,6 +136,9 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
   };
 
   const renderPriceTag = (item, size = 'normal') => {
+    const selectedVariant = getSelectedVariantPrice(item);
+    const displayPrice = selectedVariant || item;
+
     const sizeClasses = {
       small: {
         base: 'text-xs px-2 py-0.5',
@@ -132,47 +156,111 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
 
     const classes = sizeClasses[size] || sizeClasses.normal;
 
-    return item.promotionalPrice ? (
-      <div className={`bg-green-50 rounded-full ${classes.base} font-semibold text-green-600 shadow-md flex items-center gap-1`}>
-        <Tag className={classes.icon} />
-        {currencySymbol}{item.promotionalPrice}
-      </div>
-    ) : (
+    if (displayPrice.promotionalPrice) {
+      return (
+        <div className={`bg-green-50 rounded-full ${classes.base} font-semibold text-green-600 shadow-md flex items-center gap-1`}>
+          <Tag className={classes.icon} />
+          {formatPrice(displayPrice.promotionalPrice)}
+        </div>
+      );
+    }
+
+    return (
       <div className={`bg-white rounded-full ${classes.base} font-semibold shadow-md`}>
-        {currencySymbol}{item.price}
+        {formatPrice(displayPrice.price)}
+      </div>
+    );
+  };
+
+  const renderVariantBadges = (item, onVariantClick) => {
+    if (!item.variants?.length) return null;
+
+    return (
+      <div className="flex gap-2">
+        {item.variants.map((variant) => (
+          <button
+            key={variant.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              onVariantClick(item.id, variant.id);
+            }}
+            className={`
+              px-3 py-1 
+              text-sm 
+              border 
+              rounded-lg
+              transition-colors
+              ${selectedVariant[item.id] === variant.id
+                ? 'border-blue-200 bg-blue-50 text-blue-600'
+                : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }
+            `}
+          >
+            {variant.label}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const renderCompactVariants = (item) => {
+    if (!item.variants?.length) return null;
+    
+    return (
+      <div className="text-sm border rounded-lg bg-gray-50 text-gray-600 px-3 py-1">
+        <select
+          value={selectedVariant[item.id] || ''}
+          onChange={(e) => {
+            e.stopPropagation();
+            setSelectedVariant(prev => ({
+              ...prev,
+              [item.id]: e.target.value || null
+            }));
+          }}
+          className="bg-transparent border-none focus:ring-0 cursor-pointer pr-6"
+        >
+          <option value="">Size</option>
+          {item.variants.map((variant) => (
+            <option key={variant.id} value={variant.id}>
+              {variant.label}
+            </option>
+          ))}
+        </select>
       </div>
     );
   };
 
   const renderBadges = (item, size = 'normal') => {
-      const sizeClasses = {
-        small: 'w-3 h-3',        // Matching ShopMenuCreator size
-        normal: 'w-3 h-3',       // Matching ShopMenuCreator size
-        large: 'w-5 h-5'        // Slightly larger for special cases
-      };
-
-      const badgeSize = sizeClasses[size] || sizeClasses.normal;
-
-      return (
-        <div className="flex gap-1">
-          {foodSpecialties.map(specialty => {
-            const Icon = SPECIALTY_ICONS[specialty.id];
-            const isActive = item[specialty.property];
-            
-            if (!isActive) return null;
-            
-            return (
-              <div 
-                key={specialty.id} 
-                className={`${specialty.bgColor} p-1 rounded-full shadow-sm`}
-              >
-                <Icon className={`${badgeSize} text-white`} />
-              </div>
-            );
-          })}
-        </div>
-      );
+    const sizeClasses = {
+      small: 'w-3 h-3',
+      normal: 'w-3 h-3',
+      large: 'w-5 h-5'
     };
+
+    const badgeSize = sizeClasses[size] || sizeClasses.normal;
+
+    return (
+      <div className="flex gap-1">
+        {foodSpecialties.map(specialty => {
+          if (!SPECIALTY_ICONS[specialty.icon]) return null;
+          const Icon = SPECIALTY_ICONS[specialty.icon];
+          const isActive = item[specialty.property];
+          
+          if (!isActive) return null;
+          
+          return (
+            <div 
+              key={specialty.id} 
+              className={`${specialty.bgColor} p-1 rounded-full shadow-sm`}
+            >
+              <Icon className={`${badgeSize} text-white`} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const NavigationContainer = ({ children }) => (
     <div className="sticky top-0 bg-white shadow-sm z-20">
       {children}
@@ -241,7 +329,9 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
       ...categories,
       ...foodSpecialties.map(specialty => ({
         id: specialty.id,
-        icon: React.createElement(SPECIALTY_ICONS[specialty.id], { className: "w-4 h-4" }),
+        icon: specialty.icon && SPECIALTY_ICONS[specialty.icon] && React.createElement(SPECIALTY_ICONS[specialty.icon], { 
+          className: "w-4 h-4" 
+        }),
         styles: specialty
       }))
     ];
@@ -311,6 +401,14 @@ export const useTemplateLogic = ({ menuItems = [], shop = null, orderedCategorie
     NavigationContainer,
     StoreNavigation,
     CategoryNavigation,
-    getOrderedItemsByCategory
+    getOrderedItemsByCategory,
+    formatPrice,
+    renderVariantBadges,
+    renderCompactVariants,
+    selectedVariant,
+    setSelectedVariant,
+    getSelectedVariantPrice
   };
 };
+
+export default useTemplateLogic;

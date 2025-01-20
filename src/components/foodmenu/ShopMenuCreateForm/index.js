@@ -1,3 +1,4 @@
+// index.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
@@ -35,6 +36,8 @@ const ShopMenuCreateForm = () => {
     isSpicy: false,
     isChefRecommended: false,
     isPopular: false,
+    hasAllergens: false,  // Added
+    allergyNote: '',      // Added
     imageFile: null,
     imagePreview: null,
     category: category || '',
@@ -127,9 +130,7 @@ const ShopMenuCreateForm = () => {
             }))}
           />
 
-          {/* Basic Information */}
           <div className="space-y-4">
-            {/* Category Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category
@@ -176,7 +177,6 @@ const ShopMenuCreateForm = () => {
               }))}
             />
 
-            {/* Price Variants */}
             <VariantPrice
               variants={formData.variants}
               onChange={(newVariants) => setFormData(prev => ({
@@ -203,8 +203,10 @@ const ShopMenuCreateForm = () => {
               selectedSpecialties={{
                 isSpicy: formData.isSpicy,
                 isChefRecommended: formData.isChefRecommended,
-                isPopular: formData.isPopular
+                isPopular: formData.isPopular,
+                hasAllergens: formData.hasAllergens
               }}
+              allergyNote={formData.allergyNote}
               onChange={(property, value) => setFormData(prev => ({
                 ...prev,
                 [property]: value
@@ -212,7 +214,6 @@ const ShopMenuCreateForm = () => {
             />
           </div>
 
-          {/* Submit Buttons */}
           <div className="flex justify-end gap-2">
             <button
               type="button"

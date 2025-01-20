@@ -1,6 +1,7 @@
+// Template3.js
 import React from 'react';
 import PopupItem from '../PopupItem';
-import { useTemplateLogic } from './TemplateCore';
+import useTemplateLogic from './TemplateCore';
 
 const Template3 = ({ menuItems = [], shop = null }) => {
   const {
@@ -45,9 +46,9 @@ const Template3 = ({ menuItems = [], shop = null }) => {
     <div className="min-h-screen bg-white">
       {/* Navigation */}
       <NavigationContainer>
-            <StoreNavigation />
-            <CategoryNavigation />
-          </NavigationContainer>
+        <StoreNavigation />
+        <CategoryNavigation />
+      </NavigationContainer>
 
       {/* Gallery Grid */}
       <div className="p-2">

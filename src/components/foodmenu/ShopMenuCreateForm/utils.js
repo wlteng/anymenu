@@ -1,3 +1,4 @@
+// utils.js
 import { getShopByUsername } from '../../../firebase/utils';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
@@ -47,7 +48,9 @@ export const loadItem = async (itemId, setFormData, setIsEditMode, showToast) =>
         preparationTime: itemData.preparationTime || '',
         itemCode: itemData.itemCode || '',
         price: itemData.price?.toString() || '',
-        variants: formattedVariants
+        variants: formattedVariants,
+        hasAllergens: itemData.hasAllergens || false,     // Added
+        allergyNote: itemData.allergyNote || ''           // Added
       });
       setIsEditMode(true);
     }

@@ -28,18 +28,18 @@ export const shopTypes = [
     description: "Manage multiple food stalls or vendors under one roof. Each store can have its own menu, making it perfect for food courts, markets, or collaborative spaces.",
     features: ["Multiple store management", "Individual menus", "Store profiles", "Centralized ordering"]
   }
-  
 ];
+
 // Food Specialties with icons
 export const foodSpecialties = [
   {
-    id: 'chefRecommended',  // Changed from 'chefs' to match isChefRecommended
+    id: 'chefRecommended',
     label: "Chef's Choice",
     icon: 'ChefHat',
     bgColor: 'bg-yellow-500',
     textColor: 'text-yellow-600',
     lightBg: 'bg-yellow-100',
-    property: 'isChefRecommended'  // Added property name mapping
+    property: 'isChefRecommended'
   },
   {
     id: 'spicy',
@@ -50,7 +50,6 @@ export const foodSpecialties = [
     lightBg: 'bg-red-100',
     property: 'isSpicy'
   },
-
   {
     id: 'popular',
     label: "Popular",
@@ -59,10 +58,17 @@ export const foodSpecialties = [
     textColor: 'text-purple-600',
     lightBg: 'bg-purple-100',
     property: 'isPopular'
+  },
+  {
+    id: 'allergy',
+    label: "Allergen Alert",
+    icon: 'AlertCircle',
+    bgColor: 'bg-blue-500',
+    textColor: 'text-blue-600',
+    lightBg: 'bg-blue-100',
+    property: 'hasAllergens'
   }
 ];
-
-
 export const availableCategories = [
   { value: "Appetizers", label: "Appetizers" },
   { value: "Main Course", label: "Main Course" },

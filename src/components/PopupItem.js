@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star, Store, ExternalLink } from 'lucide-react';
+import { ChefHat, Flame, Heart, Share2, Clock, Tag, Star, Store, ExternalLink, AlertCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,19 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
 
     checkFavorite();
   }, [user, item?.id, isOpen]);
+
+  const formatPrice = (price) => {
+    const currencySymbol = shop?.currencySymbol || '$';
+    
+    if (shop?.currencyCode === 'IDR') {
+      return `${currencySymbol}${parseInt(price).toLocaleString('id-ID')}`;
+    }
+    
+    return `${currencySymbol}${parseFloat(price).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
   const getStoreName = () => {
     if (!stores.length || !item?.storeId) return null;
@@ -83,6 +96,8 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
           isSpicy: item.isSpicy || false,
           isChefRecommended: item.isChefRecommended || false,
           isPopular: item.isPopular || false,
+          hasAllergens: item.hasAllergens || false,
+          allergyNote: item.allergyNote || '',
           shopId: shop.id,
           storeId: item.storeId || null
         };
@@ -323,11 +338,11 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
               </div>
             </div>
 
-            {/* Price Tag */}
+            {/* Base Price Tag */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
               {item.promotionalPrice && (
                 <div className="bg-white rounded-full px-4 py-2 text-sm font-semibold text-gray-500 line-through shadow-md">
-                  ${item.price}
+                  {formatPrice(item.price)}
                 </div>
               )}
               <div className={`flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold shadow-md ${
@@ -337,7 +352,7 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
                   <Tag className="w-4 h-4 text-green-600" />
                 )}
                 <span className={item.promotionalPrice ? 'text-green-600' : ''}>
-                  ${item.promotionalPrice || item.price}
+                  {formatPrice(item.promotionalPrice || item.price)}
                 </span>
               </div>
             </div>
@@ -367,6 +382,11 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
                     <Star className="w-5 h-5 text-white" />
                   </div>
                 )}
+                {item.hasAllergens && (
+                  <div className="bg-blue-500 p-1.5 rounded-full shadow-md">
+                    <AlertCircle className="w-5 h-5 text-white" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -375,24 +395,63 @@ const PopupItem = ({ item, isOpen, onClose, shop, stores = [] }) => {
               {item.description}
             </p>
 
-            {/* Footer Information */}
-            {renderFooterInfo()}
+            {/* Allergen Alert */}
+                        {item.hasAllergens && item.allergyNote && (
+                          <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                            <div className="flex items-center gap-2 text-red-700 font-medium mb-1">
+                              <AlertCircle className="w-5 h-5" />
+                              <span>Allergen Alert</span>
+                            </div>
+                            <p className="text-red-600 text-sm">
+                              {item.allergyNote}
+                            </p>
+                          </div>
+                        )}
 
-            {/* Visit Shop Button (shown when viewing from favorites) */}
-            {window.location.pathname === '/love-food' && (
-              <button
-                onClick={handleVisitShop}
-                className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700 transition-colors"
-              >
-                <ExternalLink className="w-5 h-5" />
-                <span>Visit {shop.name}</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+                        {/* Variants Section */}
+                        {item.variants && item.variants.length > 0 && (
+                          <div className="mb-6">
+                            <div className="space-y-3">
+                              {item.variants.map((variant) => (
+                                <div 
+                                  key={variant.id}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <span className="font-medium">{variant.label}</span>
+                                  <div className="flex items-center gap-2">
+                                    {variant.promotionalPrice && (
+                                      <span className="text-sm text-gray-500 line-through">
+                                        {formatPrice(variant.price)}
+                                      </span>
+                                    )}
+                                    <span className={`text-sm font-medium ${variant.promotionalPrice ? 'text-green-600' : ''}`}>
+                                      {formatPrice(variant.promotionalPrice || variant.price)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-export default PopupItem;
+                        {/* Footer Information */}
+                        {renderFooterInfo()}
+
+                        {/* Visit Shop Button */}
+                        {window.location.pathname === '/love-food' && (
+                          <button
+                            onClick={handleVisitShop}
+                            className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700 transition-colors"
+                          >
+                            <ExternalLink className="w-5 h-5" />
+                            <span>Visit {shop.name}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              );
+            };
+
+            export default PopupItem;

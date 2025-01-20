@@ -1,6 +1,7 @@
-import React from 'react';
+// Template1.js
+import React, { useEffect } from 'react';
 import PopupItem from '../PopupItem';
-import { useTemplateLogic } from './TemplateCore';
+import useTemplateLogic from './TemplateCore';
 
 const Template1 = ({ menuItems = [], shop = null }) => {
   const {
@@ -14,18 +15,38 @@ const Template1 = ({ menuItems = [], shop = null }) => {
     renderBadges,
     NavigationContainer,
     renderPriceTag,
+    renderVariantBadges,
+    setSelectedVariant,
+    selectedVariant,
     StoreNavigation,
-    CategoryNavigation
+    CategoryNavigation,
+    getSelectedVariantPrice  // Added this
   } = useTemplateLogic({ menuItems, shop });
 
   const currencySymbol = shop?.currencySymbol || '$';
 
+  // Auto-select first variant for each item on desktop
+  useEffect(() => {
+    const initialVariants = {};
+    filteredItems.forEach(item => {
+      if (item.variants?.length > 0 && !selectedVariant[item.id]) {
+        initialVariants[item.id] = item.variants[0].id;
+      }
+    });
+    if (Object.keys(initialVariants).length > 0) {
+      setSelectedVariant(prev => ({
+        ...prev,
+        ...initialVariants
+      }));
+    }
+  }, [filteredItems]);
+
   return (
     <div className="min-h-screen bg-gray-50">
-    <NavigationContainer>
-      <StoreNavigation />
-      <CategoryNavigation />
-    </NavigationContainer>
+      <NavigationContainer>
+        <StoreNavigation />
+        <CategoryNavigation />
+      </NavigationContainer>
 
       <div className="max-w-3xl mx-auto p-4">
         <div className="space-y-4">
@@ -67,7 +88,13 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                       <p className="mt-2 text-gray-500 line-clamp-2">{item.description}</p>
                       
                       <div className="md:hidden mt-2">
-                        {renderItemFooter(item)}
+                        <div className="flex items-center gap-3">
+                          {renderItemFooter(item)}
+                          {/* Use variant badges instead of dropdown for mobile */}
+                          {renderVariantBadges(item, (itemId, variantId) => {
+                            setSelectedVariant(prev => ({ ...prev, [itemId]: variantId }));
+                          })}
+                        </div>
                       </div>
                     </div>
 
@@ -75,24 +102,32 @@ const Template1 = ({ menuItems = [], shop = null }) => {
                       <div className="flex items-center gap-2">
                         {renderBadges(item, 'large')}
                       </div>
-                      {renderItemFooter(item)}
+                      <div className="flex items-center gap-3">
+                        {renderItemFooter(item)}
+                        {renderVariantBadges(item, (itemId, variantId) => {
+                          setSelectedVariant(prev => ({ ...prev, [itemId]: variantId }));
+                        })}
+                      </div>
                     </div>
 
                     <div className="hidden md:flex items-center text-xl gap-1 absolute right-0 translate-y-1/2" style={{bottom:'22px'}}>
-                      {item.promotionalPrice ? (
-                        <>
-                          <div className="text-gray-300 line-through">
-                            {currencySymbol}{item.price}
+                      {(() => {
+                        const priceData = getSelectedVariantPrice(item);
+                        return priceData.promotionalPrice ? (
+                          <>
+                            <div className="text-gray-300 line-through">
+                              {currencySymbol}{priceData.price}
+                            </div>
+                            <div className="bg-green-500 text-white px-4 py-2 rounded-tl-lg rounded-br-lg ml-2">
+                              {currencySymbol}{priceData.promotionalPrice}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="bg-blue-50 text-gray-400 px-4 py-2 rounded-tl-lg rounded-br-lg">
+                            {currencySymbol}{priceData.price}
                           </div>
-                          <div className="bg-green-500 text-white px-4 py-2 rounded-tl-lg rounded-br-lg ml-2">
-                            {currencySymbol}{item.promotionalPrice}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="bg-blue-50 text-gray-400 px-4 py-2 rounded-tl-lg rounded-br-lg">
-                          {currencySymbol}{item.price}
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
