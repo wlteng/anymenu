@@ -1,4 +1,3 @@
-// Template2.js
 import React from 'react';
 import PopupItem from '../PopupItem';
 import useTemplateLogic from './TemplateCore';
@@ -24,17 +23,24 @@ const Template2 = ({ menuItems = [], shop = null }) => {
       className="relative cursor-pointer group"
     >
       <div className="relative overflow-hidden rounded-2xl aspect-square bg-gray-100">
-        {item.image ? (
-          <img 
-            src={item.image}
-            alt={item.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span className="text-lg">{item.title}</span>
-          </div>
-        )}
+        <div className="w-full h-full">
+          {item.image ? (
+            <img 
+              src={item.image}
+              alt={item.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.className = "w-full h-full flex items-center justify-center";
+                e.target.parentElement.innerHTML = `<span class="text-gray-400">${item.title}</span>`;
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-gray-400">{item.title}</span>
+            </div>
+          )}
+        </div>
         
         {renderItemCode(item.itemCode)}
 
